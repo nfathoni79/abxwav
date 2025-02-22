@@ -1,16 +1,41 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import AButton from './components/AButton.vue'
 import ARadio from './components/ARadio.vue'
 
+const presets = ref([
+  {
+    name: 'Original WAV vs Converted WAV',
+    audioAUrl: '/audio-a.wav',
+    audioBUrl: '/audio-b.wav',
+  },
+  {
+    name: 'Mayoiuta (Lossless vs Lossy)',
+    audioAUrl: 'https://www.dropbox.com/scl/fi/emlmqntz49vwl0ztwqmnd/mayoiuta-f.wav?rlkey=p0jyk8te9i4tajcd93sedzm17&st=0kut2wup&dl=1',
+    audioBUrl: 'https://www.dropbox.com/scl/fi/ug82qzohi0yuzlicy8p6q/mayoiuta-f.mp3?rlkey=93ce1aarkip2welh39imm8dbz&st=ap7uit4p&dl=1',
+  },
+  {
+    name: 'Custom',
+  },
+])
+const preset = ref(0)
+
+const maxTrial = ref(10)
 const trialNo = ref(0)
 const trials = ref([])
+
+const audioAUrl = ref(null)
+const audioBUrl = ref(null)
 
 const audioA = ref(null)
 const audioB = ref(null)
 const audioAReady = ref(false)
 const audioBReady = ref(false)
 const audio = ref(null)
+
+const loadingAudio = ref(false)
+const startInfo = ref('')
+const loadingProgress = ref(0)
 
 const choice = ref(null)
 const choices = ref([])
@@ -29,39 +54,120 @@ const score = computed(() => {
   return current
 })
 
-onMounted(() => {
-  audioA.value = new Audio('/audio-a.wav')
-  audioB.value = new Audio('/audio-b.wav')
-
-  audioA.value.addEventListener('canplaythrough', () => {
-    audioAReady.value = true
-  })
-
-  audioB.value.addEventListener('canplaythrough', () => {
-    audioBReady.value = true
-  })
+watch(preset, newPreset => {
+  if (newPreset == presets.value.length - 1) {
+    audioAUrl.value = ''
+    audioBUrl.value = ''
+  } else {
+    audioAUrl.value = presets.value[newPreset].audioAUrl
+    audioBUrl.value = presets.value[newPreset].audioBUrl
+  }
 })
 
-const start = () => {
-  generateTrials()
+watch([audioAReady, audioBReady], ([newA, newB]) => {
+  if (newA && newB) {
+    loadingAudio.value = false
+    startInfo.value = ''
 
-  choices.value = []
-  trialNo.value = 1
-}
+    generateTrials()
+    choices.value = []
+    trialNo.value = 1
+  }
+})
 
-const playAudio = audio => {
-  audioA.value.pause()
-  audioA.value.currentTime = 0
-  audioB.value.pause()
-  audioB.value.currentTime = 0
+onMounted(() => {
+  audioAUrl.value = presets.value[0].audioAUrl
+  audioBUrl.value = presets.value[0].audioBUrl
+})
 
-  if (audio == 'a') {
-    audioA.value.play()
+const start = async () => {
+  if (!audioAUrl.value || !audioBUrl.value) {
+    startInfo.value = 'Invalid audio'
+    return
   }
 
-  if (audio == 'b') {
-    audioB.value.play()
+  loadingAudio.value = true
+  startInfo.value = 'Loading audio...'
+  
+  if (!audioAUrl.value.startsWith('/')) {
+    audioAUrl.value = `https://cobacors.my.id/${audioAUrl.value}`
   }
+
+  if (!audioBUrl.value.startsWith('/')) {
+    audioBUrl.value = `https://cobacors.my.id/${audioBUrl.value}`
+  }
+
+  const responseA = await fetch(audioAUrl.value)
+  .catch(error => {
+    startInfo.value = error.message
+  })
+
+  if (!responseA) {
+    loadingAudio.value = false
+    return
+  }
+
+  const responseB = await fetch(audioBUrl.value)
+  .catch(error => {
+    startInfo.value = error.message
+  })
+
+  if (!responseB) {
+    loadingAudio.value = false
+    return
+  }
+
+  const contentLengthA = responseA.headers.get('Content-Length')
+  const contentLengthB = responseB.headers.get('Content-Length')
+
+  if (!contentLengthA || !contentLengthB) {
+    loadingAudio.value = false
+    startInfo.value = 'Invalid audio'
+    return
+  }
+
+  const total = parseInt(contentLengthA) + parseInt(contentLengthB)
+  let received = 0
+  
+  const readerA = responseA.body.getReader()
+  const readerB = responseB.body.getReader()
+  const chunksA = []
+  const chunksB = []
+
+  while (true) {
+    const { done, value } = await readerA.read()
+    if (done) break
+
+    chunksA.push(value)
+    received += value.length
+
+    // Call the progress callback with the percentage
+    loadingProgress.value = ((received / total) * 100).toFixed(2)
+  }
+
+  while (true) {
+    const { done, value } = await readerB.read()
+    if (done) break
+
+    chunksB.push(value)
+    received += value.length
+
+    loadingProgress.value = ((received / total) * 100).toFixed(2)
+  }
+
+  // Concatenate chunks and create a Blob
+  const blobA = new Blob(chunksA)
+  const blobB = new Blob(chunksB)
+  const blobUrlA = URL.createObjectURL(blobA)
+  const blobUrlB = URL.createObjectURL(blobB)
+
+  audioA.value = new Audio()
+  audioB.value = new Audio()
+  audioA.value.src = blobUrlA
+  audioB.value.src = blobUrlB
+
+  audioAReady.value = true
+  audioBReady.value = true
 }
 
 const next = () => {
@@ -69,20 +175,38 @@ const next = () => {
 
   choices.value.push(choice.value)
 
-  audioA.value.pause()
-  audioA.value.currentTime = 0
-  audioB.value.pause()
-  audioB.value.currentTime = 0
+  if (audioA.value.currentTime > 0) {
+    audioA.value.pause()
+    audioA.value.currentTime = 0
+  }
+
+  if (audioB.value.currentTime > 0) {
+    audioB.value.pause()
+    audioB.value.currentTime = 0
+  }
 
   audio.value = null
   choice.value = null
   trialNo.value++
 }
 
+const restart = () => {
+  generateTrials()
+  choices.value = []
+  trialNo.value = 1
+}
+
+const backToHome = () => {
+  trialNo.value = 0
+  loadingProgress.value = 0
+  audioAReady.value = false
+  audioBReady.value = false
+}
+
 const generateTrials = () => {
   trials.value = []
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < maxTrial.value; i++) {
     const random = Math.random()
 
     if (random < 0.5) {
@@ -90,6 +214,26 @@ const generateTrials = () => {
     } else {
       trials.value.push('b')
     }
+  }
+}
+
+const playAudio = audio => {
+  if (audioA.value.currentTime > 0) {
+    audioA.value.pause()
+    audioA.value.currentTime = 0
+  }
+
+  if (audioB.value.currentTime > 0) {
+    audioB.value.pause()
+    audioB.value.currentTime = 0
+  }
+
+  if (audio == 'a') {
+    audioA.value.play()
+  }
+
+  if (audio == 'b') {
+    audioB.value.play()
   }
 }
 </script>
@@ -100,19 +244,70 @@ const generateTrials = () => {
       <h1 class="text-3xl font-semibold text-gray-900">ABX WAV</h1>
 
       <p class="mt-4 text-gray-900">
-        Test your ears to hear the difference between an original WAV file and the converted one
+        Test your ears to hear the difference between two audio files
       </p>
 
-      <AButton :disabled="!audioAReady || !audioBReady"
-        @click="start" class="mt-4">
-        Start
-      </AButton>
+      <form @submit.prevent="start" class="mt-4">
+        <label for="preset" class="flex justify-center items-center gap-2">
+          <span class="basis-1/4 text-gray-900 text-left">Preset</span>
+          
+          <select id="preset" name="preset" v-model="preset"
+            class="w-full border border-gray-900 rounded-lg
+            focus:ring-0 focus:border-2 focus:border-gray-900">
+            <option v-for="(item, index) in presets" :key="index"
+              :value="index">
+              {{ item.name }}
+            </option>
+          </select>
+        </label>
+
+        <label v-if="preset == presets.length - 1" for="audio-a-url"
+          class="mt-2 flex justify-center items-center gap-2">
+          
+          <span class="basis-1/4 text-gray-900 text-left">Audio A URL</span>
+          <input id="audio-a-url" type="text" name="audioAUrl" v-model="audioAUrl"
+            class="w-full border border-gray-900 rounded-lg
+            focus:ring-0 focus:border-2 focus:border-gray-900">
+        </label>
+
+        <label v-if="preset == presets.length - 1" for="audio-b-url"
+          class="mt-2 flex justify-center items-center gap-2">
+          
+          <span class="basis-1/4 text-gray-900 text-left">Audio B URL</span>
+          <input id="audio-b-url" type="text" name="audioBUrl" v-model="audioBUrl"
+            class="w-full border border-gray-900 rounded-lg
+            focus:ring-0 focus:border-2 focus:border-gray-900">
+        </label>
+
+        <label for="max-trial"
+          class="mt-2 flex justify-center items-center gap-2">
+          
+          <span class="basis-1/4 text-gray-900 text-left">Trials</span>
+          <input id="max-trial" type="number" name="maxTrial" v-model="maxTrial"
+            min="1" max="100" class="w-full border border-gray-900 rounded-lg
+            focus:ring-0 focus:border-2 focus:border-gray-900">
+        </label>
+
+        <p v-if="startInfo" class="mt-2 text-gray-900">{{ startInfo }}</p>
+
+        <p v-if="loadingAudio" class="mt-2 text-gray-900">
+          {{ loadingProgress }}%
+        </p>
+
+        <AButton :disabled="loadingAudio" type="submit" class="mt-4">
+          Start
+        </AButton>
+      </form>
     </div>
 
-    <div v-if="trialNo >= 1 && trialNo <= 10">
+    <div v-if="trialNo >= 1 && trialNo <= maxTrial">
       <h1 class="text-3xl font-semibold text-gray-900">
-        Trial {{ trialNo }} of 10
+        Trial {{ trialNo }} of {{ maxTrial }}
       </h1>
+
+      <p class="mt-2 text-lg text-gray-900">
+        {{ presets[preset].name }}
+      </p>
 
       <div class="mt-4 mx-auto max-w-96">
         <p>Listen</p>
@@ -123,7 +318,7 @@ const generateTrials = () => {
           </ARadio>
 
           <ARadio id="audio-x" name="audio" value="x" v-model="audio"
-            @click="playAudio(trials[trialNo])" class="w-full">
+            @click="playAudio(trials[trialNo - 1])" class="w-full">
             X
           </ARadio>
 
@@ -148,20 +343,33 @@ const generateTrials = () => {
       </div>
 
       <AButton :disabled="choice == null" @click="next" class="mt-4">
-        {{ trialNo != 10 ? 'Next' : 'Finish' }}
+        {{ trialNo != maxTrial ? 'Next' : 'Finish' }}
       </AButton>
     </div>
 
-    <div v-if="trialNo > 10">
+    <div v-if="trialNo > maxTrial">
       <h1 class="text-3xl font-semibold text-gray-900">
         Result
       </h1>
 
-      <p class="mt-4 text-gray-900">You got {{ score }} correct out of 10</p>
+      <p class="mt-2 text-lg text-gray-900">
+        {{ presets[preset].name }}
+      </p>
 
-      <AButton @click="start" class="mt-4">
-        Restart
-      </AButton>
+      <p class="mt-4 text-gray-900">
+        You got {{ score }} correct out of {{ maxTrial }}
+        ({{ (score / maxTrial * 100).toFixed() }}%)
+      </p>
+
+      <div class="mt-4 flex justify-center items-center gap-2">
+        <AButton @click="restart">
+          Restart
+        </AButton>
+        
+        <AButton @click="backToHome">
+          Back to Home
+        </AButton>
+      </div>
     </div>
   </div>
 </template>
