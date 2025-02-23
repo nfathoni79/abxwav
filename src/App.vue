@@ -279,14 +279,26 @@ const playAudio = audio => {
             focus:ring-0 focus:border-2 focus:border-gray-900">
         </label>
 
-        <label for="max-trial"
-          class="mt-2 flex justify-center items-center gap-2">
-          
+        <div class="mt-2 flex justify-center items-center gap-2">
           <span class="basis-1/4 text-gray-900 text-left">Trials</span>
-          <input id="max-trial" type="number" name="maxTrial" v-model="maxTrial"
-            min="1" max="100" class="w-full border border-gray-900 rounded-lg
-            focus:ring-0 focus:border-2 focus:border-gray-900">
-        </label>
+
+          <div class="w-full flex justify-center items-center gap-2">
+            <ARadio id="trials-5" name="maxTrial" :value="5"
+              v-model="maxTrial" class="w-full">
+              5
+            </ARadio>
+
+            <ARadio id="trials-10" name="maxTrial" :value="10"
+              v-model="maxTrial" class="w-full">
+              10
+            </ARadio>
+
+            <ARadio id="trials-20" name="maxTrial" :value="20"
+              v-model="maxTrial" class="w-full">
+              20
+            </ARadio>
+          </div>
+        </div>
 
         <p v-if="startInfo" class="mt-2 text-gray-900">{{ startInfo }}</p>
 
