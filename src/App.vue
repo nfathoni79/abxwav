@@ -82,22 +82,24 @@ onMounted(() => {
 
 const start = async () => {
   if (!audioAUrl.value || !audioBUrl.value) {
-    startInfo.value = 'Invalid audio'
+    startInfo.value = 'Invalid audiox'
     return
   }
 
   loadingAudio.value = true
   startInfo.value = 'Loading audio...'
+  let newAudioAUrl = audioAUrl.value
+  let newAudioBUrl = audioBUrl.value
   
   if (!audioAUrl.value.startsWith('/')) {
-    audioAUrl.value = `https://cobacors.my.id/${audioAUrl.value}`
+    newAudioAUrl = `https://cobacors.my.id/${audioAUrl.value}`
   }
 
   if (!audioBUrl.value.startsWith('/')) {
-    audioBUrl.value = `https://cobacors.my.id/${audioBUrl.value}`
+    newAudioBUrl = `https://cobacors.my.id/${audioBUrl.value}`
   }
 
-  const responseA = await fetch(audioAUrl.value)
+  const responseA = await fetch(newAudioAUrl)
   .catch(error => {
     startInfo.value = error.message
   })
@@ -107,7 +109,7 @@ const start = async () => {
     return
   }
 
-  const responseB = await fetch(audioBUrl.value)
+  const responseB = await fetch(newAudioBUrl)
   .catch(error => {
     startInfo.value = error.message
   })
