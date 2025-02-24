@@ -10,9 +10,14 @@ const presets = ref([
     audioBUrl: '/audio-b.wav',
   },
   {
-    name: 'Mayoiuta (Lossless vs Lossy)',
+    name: 'Lossless vs Lossy (Mayoiuta)',
     audioAUrl: 'https://www.dropbox.com/scl/fi/emlmqntz49vwl0ztwqmnd/mayoiuta-f.wav?rlkey=p0jyk8te9i4tajcd93sedzm17&st=0kut2wup&dl=1',
     audioBUrl: 'https://www.dropbox.com/scl/fi/ug82qzohi0yuzlicy8p6q/mayoiuta-f.mp3?rlkey=93ce1aarkip2welh39imm8dbz&st=ap7uit4p&dl=1',
+  },
+  {
+    name: 'Lossy 320 vs Lossy 128 (Mayoiuta)',
+    audioAUrl: 'https://www.dropbox.com/scl/fi/emlmqntz49vwl0ztwqmnd/mayoiuta-f.wav?rlkey=p0jyk8te9i4tajcd93sedzm17&st=0kut2wup&dl=1',
+    audioBUrl: 'https://www.dropbox.com/scl/fi/80qaxdhoj07ui91s6zzgw/mayoiuta-f-128.mp3?rlkey=run3m6ynqvfyh9ww9rydkqw10&st=iqavozf9&dl=1',
   },
   {
     name: 'Custom',
@@ -82,7 +87,7 @@ onMounted(() => {
 
 const start = async () => {
   if (!audioAUrl.value || !audioBUrl.value) {
-    startInfo.value = 'Invalid audiox'
+    startInfo.value = 'Invalid audio'
     return
   }
 
@@ -163,13 +168,28 @@ const start = async () => {
   const blobUrlA = URL.createObjectURL(blobA)
   const blobUrlB = URL.createObjectURL(blobB)
 
-  audioA.value = new Audio()
-  audioB.value = new Audio()
-  audioA.value.src = blobUrlA
-  audioB.value.src = blobUrlB
+  audioA.value = new Audio(blobUrlA)
+  audioB.value = new Audio(blobUrlB)
 
-  audioAReady.value = true
-  audioBReady.value = true
+  audioA.value.addEventListener('loadeddata', () => {
+    if (audioA.value.readyState == 4) {
+      audioAReady.value = true
+    }
+  })
+
+  audioB.value.addEventListener('loadeddata', () => {
+    if (audioB.value.readyState == 4) {
+      audioBReady.value = true
+    }
+  })
+
+  setTimeout(() => {
+    if (!audioAReady.value || !audioBReady.value) {
+      loadingAudio.value = false
+      startInfo.value = 'Invalid audio'
+      loadingProgress.value = 0
+    }
+  }, 3000);
 }
 
 const next = () => {
