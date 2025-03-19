@@ -5,11 +5,6 @@ import ARadio from './components/ARadio.vue'
 
 const presets = ref([
   {
-    name: 'Original WAV vs Converted WAV',
-    audioAUrl: '/audio-a.wav',
-    audioBUrl: '/audio-b.wav',
-  },
-  {
     name: 'Lossless vs Lossy (Mayoiuta)',
     audioAUrl: 'https://www.dropbox.com/scl/fi/emlmqntz49vwl0ztwqmnd/mayoiuta-f.wav?rlkey=p0jyk8te9i4tajcd93sedzm17&st=0kut2wup&dl=1',
     audioBUrl: 'https://www.dropbox.com/scl/fi/ug82qzohi0yuzlicy8p6q/mayoiuta-f.mp3?rlkey=93ce1aarkip2welh39imm8dbz&st=ap7uit4p&dl=1',
@@ -18,6 +13,11 @@ const presets = ref([
     name: 'Lossy 320 vs Lossy 128 (Mayoiuta)',
     audioAUrl: 'https://www.dropbox.com/scl/fi/emlmqntz49vwl0ztwqmnd/mayoiuta-f.wav?rlkey=p0jyk8te9i4tajcd93sedzm17&st=0kut2wup&dl=1',
     audioBUrl: 'https://www.dropbox.com/scl/fi/80qaxdhoj07ui91s6zzgw/mayoiuta-f-128.mp3?rlkey=run3m6ynqvfyh9ww9rydkqw10&st=iqavozf9&dl=1',
+  },
+  {
+    name: 'Original WAV vs Converted WAV',
+    audioAUrl: '/audio-a.wav',
+    audioBUrl: '/audio-b.wav',
   },
   {
     name: 'Custom',
