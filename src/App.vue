@@ -308,6 +308,11 @@ const playAudio = audio => {
         Test your ears to hear the difference between two audio files
       </p>
 
+      <p class="mt-2 text-sm text-gray-800">
+        You will receive two reference samples, labeled A and B, along with a target sample, X.<br>
+        Your task is to determine whether sample X corresponds to sample A or sample B.
+      </p>
+
       <form @submit.prevent="start" class="mt-4">
         <label for="preset" class="flex justify-center items-center gap-2">
           <span class="basis-1/4 text-gray-900 text-left">Preset</span>
