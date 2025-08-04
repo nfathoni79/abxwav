@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import AButton from './components/AButton.vue'
 import ARadio from './components/ARadio.vue'
+import SoundIcon from './components/SoundIcon.vue'
 
 const presets = ref([
   {
@@ -37,6 +38,8 @@ const audioB = ref(null)
 const audioAReady = ref(false)
 const audioBReady = ref(false)
 const audio = ref(null)
+const audioAPlaying = ref(false)
+const audioBPlaying = ref(false)
 
 const loadingAudio = ref(false)
 const startInfo = ref('')
@@ -57,6 +60,23 @@ const score = computed(() => {
   }
 
   return current
+})
+
+const minScore = computed(() => {
+  switch (maxTrial.value) {
+    case 20:
+      return 15
+    case 10:
+      return 9
+    case 5:
+      return 5
+    default:
+      return 9
+  }
+})
+
+const audioPlaying = computed(() => {
+  return audioAPlaying.value || audioBPlaying.value
 })
 
 watch(preset, newPreset => {
@@ -183,6 +203,23 @@ const start = async () => {
     }
   })
 
+  const handleAudioPlayback = (audio, playing) => {
+    if (audio == 'a') {
+      audioAPlaying.value = playing
+    }
+
+    if (audio == 'b') {
+      audioBPlaying.value = playing
+    }
+  }
+
+  audioA.value.addEventListener('play', () => handleAudioPlayback('a', true))
+  audioA.value.addEventListener('pause', () => handleAudioPlayback('a', false))
+  audioA.value.addEventListener('ended', () => handleAudioPlayback('a', false))
+  audioB.value.addEventListener('play', () => handleAudioPlayback('b', true))
+  audioB.value.addEventListener('pause', () => handleAudioPlayback('b', false))
+  audioB.value.addEventListener('ended', () => handleAudioPlayback('b', false))
+
   setTimeout(() => {
     if (!audioAReady.value || !audioBReady.value) {
       loadingAudio.value = false
@@ -240,11 +277,13 @@ const generateTrials = () => {
 }
 
 const playAudio = audio => {
+  // Reset Audio A
   if (audioA.value.currentTime > 0) {
     audioA.value.pause()
     audioA.value.currentTime = 0
   }
 
+  // Reset Audio B
   if (audioB.value.currentTime > 0) {
     audioB.value.pause()
     audioB.value.currentTime = 0
@@ -348,17 +387,17 @@ const playAudio = audio => {
         <div class="mt-1 flex justify-between items-center gap-2">
           <ARadio id="audio-a" name="audio" value="a" v-model="audio"
             @click="playAudio('a')" class="w-full">
-            A
+            A <SoundIcon v-if="audio == 'a' && audioPlaying" class="ml-2 h-5" />
           </ARadio>
 
           <ARadio id="audio-x" name="audio" value="x" v-model="audio"
             @click="playAudio(trials[trialNo - 1])" class="w-full">
-            X
+            X <SoundIcon v-if="audio == 'x' && audioPlaying" class="ml-2 h-5" />
           </ARadio>
 
           <ARadio id="audio-b" name="audio" value="b" v-model="audio"
             @click="playAudio('b')" class="w-full">
-            B
+            B <SoundIcon v-if="audio == 'b' && audioPlaying" class="ml-2 h-5" />
           </ARadio>
         </div>
       </div>
@@ -393,6 +432,10 @@ const playAudio = audio => {
       <p class="mt-4 text-gray-900">
         You got {{ score }} correct out of {{ maxTrial }}
         ({{ (score / maxTrial * 100).toFixed() }}%)
+      </p>
+
+      <p class="text-gray-900">
+        You probably {{ score <= minScore ? 'cannot' : 'can' }} hear the difference
       </p>
 
       <div class="mt-4 flex justify-center items-center gap-2">
