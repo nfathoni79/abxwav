@@ -7,19 +7,19 @@ import SoundIcon from './components/SoundIcon.vue'
 const presets = ref([
   {
     name: 'Lossless vs Lossy (Mayoiuta)',
-    audioAUrl: 'https://www.dropbox.com/scl/fi/emlmqntz49vwl0ztwqmnd/mayoiuta-f.wav?rlkey=p0jyk8te9i4tajcd93sedzm17&st=0kut2wup&dl=1',
-    audioBUrl: 'https://www.dropbox.com/scl/fi/ug82qzohi0yuzlicy8p6q/mayoiuta-f.mp3?rlkey=93ce1aarkip2welh39imm8dbz&st=ap7uit4p&dl=1',
+    audioAUrl: 'https://res.cloudinary.com/dtxpjfdjr/video/upload/v1768009878/mayoiuta-f_qozjsq.wav',
+    audioBUrl: 'https://res.cloudinary.com/dtxpjfdjr/video/upload/v1768010006/mayoiuta-f_myb9bc.mp3',
   },
   {
     name: 'Lossy 320 vs Lossy 128 (Mayoiuta)',
-    audioAUrl: 'https://www.dropbox.com/scl/fi/emlmqntz49vwl0ztwqmnd/mayoiuta-f.wav?rlkey=p0jyk8te9i4tajcd93sedzm17&st=0kut2wup&dl=1',
-    audioBUrl: 'https://www.dropbox.com/scl/fi/80qaxdhoj07ui91s6zzgw/mayoiuta-f-128.mp3?rlkey=run3m6ynqvfyh9ww9rydkqw10&st=iqavozf9&dl=1',
+    audioAUrl: 'https://res.cloudinary.com/dtxpjfdjr/video/upload/v1768010006/mayoiuta-f_myb9bc.mp3',
+    audioBUrl: 'https://res.cloudinary.com/dtxpjfdjr/video/upload/v1768010023/mayoiuta-f-128_gambdc.mp3',
   },
-  {
-    name: 'Original WAV vs Converted WAV',
-    audioAUrl: '/audio-a.wav',
-    audioBUrl: '/audio-b.wav',
-  },
+  // {
+  //   name: 'Original WAV vs Converted WAV',
+  //   audioAUrl: '/audio-a.wav',
+  //   audioBUrl: '/audio-b.wav',
+  // },
   {
     name: 'Custom',
   },
@@ -308,7 +308,7 @@ const playAudio = audio => {
         Test your ears to hear the difference between two audio files
       </p>
 
-      <p class="mt-2 text-sm text-gray-800">
+      <p class="mt-2 text-sm text-gray-700">
         You will receive two reference samples, labeled A and B, along with a target sample, X.<br>
         Your task is to determine whether sample X corresponds to sample A or sample B.
       </p>
