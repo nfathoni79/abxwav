@@ -4,27 +4,22 @@ import AButton from './components/AButton.vue'
 import ARadio from './components/ARadio.vue'
 import SoundIcon from './components/SoundIcon.vue'
 
-const presets = ref([
+const audioOptions = ref([
   {
-    name: 'Lossless vs Lossy (Mayoiuta)',
-    audioAUrl: 'https://res.cloudinary.com/dtxpjfdjr/video/upload/v1768009878/mayoiuta-f_qozjsq.wav',
-    audioBUrl: 'https://res.cloudinary.com/dtxpjfdjr/video/upload/v1768010006/mayoiuta-f_myb9bc.mp3',
+    name: 'Lossless 16-bit',
+    audioUrl: '/mayoiuta-f-16.wav',
   },
   {
-    name: 'Lossy 320 vs Lossy 128 (Mayoiuta)',
-    audioAUrl: 'https://res.cloudinary.com/dtxpjfdjr/video/upload/v1768010006/mayoiuta-f_myb9bc.mp3',
-    audioBUrl: 'https://res.cloudinary.com/dtxpjfdjr/video/upload/v1768010023/mayoiuta-f-128_gambdc.mp3',
+    name: 'Lossy 320kbps',
+    audioUrl: '/mayoiuta-f-320.mp3',
   },
-  // {
-  //   name: 'Original WAV vs Converted WAV',
-  //   audioAUrl: '/audio-a.wav',
-  //   audioBUrl: '/audio-b.wav',
-  // },
   {
-    name: 'Custom',
+    name: 'Lossy 128kbps',
+    audioUrl: '/mayoiuta-f-128.mp3',
   },
 ])
-const preset = ref(0)
+const optionA = ref(0)
+const optionB = ref(1)
 
 const maxTrial = ref(10)
 const trialNo = ref(0)
@@ -79,14 +74,12 @@ const audioPlaying = computed(() => {
   return audioAPlaying.value || audioBPlaying.value
 })
 
-watch(preset, newPreset => {
-  if (newPreset == presets.value.length - 1) {
-    audioAUrl.value = ''
-    audioBUrl.value = ''
-  } else {
-    audioAUrl.value = presets.value[newPreset].audioAUrl
-    audioBUrl.value = presets.value[newPreset].audioBUrl
-  }
+watch(optionA, newOption => {
+  audioAUrl.value = audioOptions.value[newOption].audioUrl
+})
+
+watch(optionB, newOption => {
+  audioBUrl.value = audioOptions.value[newOption].audioUrl
 })
 
 watch([audioAReady, audioBReady], ([newA, newB]) => {
@@ -101,8 +94,8 @@ watch([audioAReady, audioBReady], ([newA, newB]) => {
 })
 
 onMounted(() => {
-  audioAUrl.value = presets.value[0].audioAUrl
-  audioBUrl.value = presets.value[0].audioBUrl
+  audioAUrl.value = audioOptions.value[optionA.value].audioUrl
+  audioBUrl.value = audioOptions.value[optionB.value].audioUrl
 })
 
 const start = async () => {
@@ -300,7 +293,7 @@ const playAudio = audio => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-screen-sm min-h-screen bg-white p-4 text-center">
+  <div class="mx-auto max-w-screen-sm min-h-screen bg-white p-8 text-center">
     <div v-if="trialNo < 1">
       <h1 class="text-3xl font-semibold text-gray-900">ABX WAV</h1>
 
@@ -308,42 +301,45 @@ const playAudio = audio => {
         Test your ears to hear the difference between two audio files
       </p>
 
-      <p class="mt-2 text-sm text-gray-700">
-        You will receive two reference samples, labeled A and B, along with a target sample, X.<br>
-        Your task is to determine whether sample X corresponds to sample A or sample B.
-      </p>
+      <div class="mt-2 rounded-lg bg-gray-100 p-2">
+        <p class="text-sm text-gray-700">
+          You will receive two reference samples, labeled A and B, along with a target sample, X.<br>
+          Your task is to determine whether sample X corresponds to sample A or sample B.
+        </p>
+      </div>
 
       <form @submit.prevent="start" class="mt-4">
-        <label for="preset" class="flex justify-center items-center gap-2">
-          <span class="basis-1/4 text-gray-900 text-left">Preset</span>
-          
-          <select id="preset" name="preset" v-model="preset"
-            class="w-full border border-gray-900 rounded-lg
-            focus:ring-0 focus:border-2 focus:border-gray-900">
-            <option v-for="(item, index) in presets" :key="index"
-              :value="index">
-              {{ item.name }}
-            </option>
-          </select>
-        </label>
+        <div class="mt-2 flex flex-col sm:flex-row gap-2">
+          <label for="optionA"
+            class="flex-1 flex flex-row sm:flex-col justify-center items-center
+            gap-2 sm:gap-0">
+            
+            <span class="basis-1/4 text-gray-900 text-left">Audio A</span>
+            <select id="optionA" name="optionA" v-model="optionA"
+              class="w-full border border-gray-900 rounded-lg
+              focus:ring-0 focus:border-2 focus:border-gray-900">
+              <option v-for="(item, index) in audioOptions" :key="index"
+                :value="index" :disabled="optionB == index">
+                {{ item.name }}
+              </option>
+            </select>
+          </label>
 
-        <label v-if="preset == presets.length - 1" for="audio-a-url"
-          class="mt-2 flex justify-center items-center gap-2">
-          
-          <span class="basis-1/4 text-gray-900 text-left">Audio A URL</span>
-          <input id="audio-a-url" type="text" name="audioAUrl" v-model="audioAUrl"
-            class="w-full border border-gray-900 rounded-lg
-            focus:ring-0 focus:border-2 focus:border-gray-900">
-        </label>
-
-        <label v-if="preset == presets.length - 1" for="audio-b-url"
-          class="mt-2 flex justify-center items-center gap-2">
-          
-          <span class="basis-1/4 text-gray-900 text-left">Audio B URL</span>
-          <input id="audio-b-url" type="text" name="audioBUrl" v-model="audioBUrl"
-            class="w-full border border-gray-900 rounded-lg
-            focus:ring-0 focus:border-2 focus:border-gray-900">
-        </label>
+          <label for="optionB"
+            class="flex-1 flex flex-row sm:flex-col justify-center items-center
+            gap-2 sm:gap-0">
+            
+            <span class="basis-1/4 text-gray-900 text-left">Audio B</span>
+            <select id="optionB" name="optionB" v-model="optionB"
+              class="w-full border border-gray-900 rounded-lg
+              focus:ring-0 focus:border-2 focus:border-gray-900">
+              <option v-for="(item, index) in audioOptions" :key="index"
+                :value="index" :disabled="optionA == index">
+                {{ item.name }}
+              </option>
+            </select>
+          </label>
+        </div>
 
         <div class="mt-2 flex justify-center items-center gap-2">
           <span class="basis-1/4 text-gray-900 text-left">Trials</span>
@@ -384,7 +380,7 @@ const playAudio = audio => {
       </h1>
 
       <p class="mt-2 text-lg text-gray-900">
-        {{ presets[preset].name }}
+        {{ audioOptions[optionA].name }} <span class="font-semibold">vs</span> {{ audioOptions[optionB].name }}
       </p>
 
       <div class="mt-4 mx-auto max-w-96">
@@ -431,7 +427,7 @@ const playAudio = audio => {
       </h1>
 
       <p class="mt-2 text-lg text-gray-900">
-        {{ presets[preset].name }}
+        {{ audioOptions[optionA].name }} <span class="font-semibold">vs</span> {{ audioOptions[optionB].name }}
       </p>
 
       <p class="mt-4 text-gray-900">
