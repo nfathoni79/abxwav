@@ -303,8 +303,8 @@ const playAudio = audio => {
 
       <div class="mt-2 rounded-lg bg-gray-100 p-2">
         <p class="text-sm text-gray-700">
-          You will receive two reference samples, labeled A and B, along with a target sample, X.<br>
-          Your task is to determine whether sample X corresponds to sample A or sample B.
+          You will receive two reference samples, labeled <span class="font-semibold">A</span> and <span class="font-semibold">B</span>, along with a target sample, <span class="font-semibold">X</span>.<br>
+          Your task is to determine whether sample <span class="font-semibold">X</span> corresponds to sample <span class="font-semibold">A</span> or sample <span class="font-semibold">B</span>.
         </p>
       </div>
 
