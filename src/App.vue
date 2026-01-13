@@ -1,8 +1,11 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AButton from './components/AButton.vue'
 import ARadio from './components/ARadio.vue'
 import SoundIcon from './components/SoundIcon.vue'
+
+const { locale } = useI18n()
 
 const audioOptions = ref([
   {
@@ -290,21 +293,42 @@ const playAudio = audio => {
     audioB.value.play()
   }
 }
+
+const saveLocale = () => {
+  localStorage.setItem('locale', locale.value)
+}
 </script>
 
 <template>
   <div class="mx-auto max-w-screen-sm min-h-screen bg-white p-8 text-center">
     <div v-if="trialNo < 1">
-      <h1 class="text-3xl font-semibold text-gray-900">ABX WAV</h1>
+      <div class="relative">
+        <h1 class="text-3xl font-semibold text-gray-900">ABX WAV</h1>
+
+        <select id="locale" name="locale"
+          v-model="$i18n.locale" @change="saveLocale"
+          class="absolute top-0 right-0 border border-gray-900 rounded-lg
+          focus:ring-0 focus:border-2 focus:border-gray-900 uppercase">
+          
+          <option v-for="locale in $i18n.availableLocales" :key="`locale-${locale}`"
+            :value="locale">
+            {{ locale }}
+          </option>
+        </select>
+      </div>
 
       <p class="mt-4 text-gray-900">
-        Test your ears to hear the difference between two audio files
+        {{ $t('description') }}
       </p>
 
       <div class="mt-2 rounded-lg bg-gray-100 p-2">
         <p class="text-sm text-gray-700">
-          You will receive two reference samples, labeled <span class="font-semibold">A</span> and <span class="font-semibold">B</span>, along with a target sample, <span class="font-semibold">X</span>.<br>
-          Your task is to determine whether sample <span class="font-semibold">X</span> corresponds to sample <span class="font-semibold">A</span> or sample <span class="font-semibold">B</span>.
+          <i18n-t keypath="help">
+            <template #a><span class="font-semibold">A</span></template>
+            <template #b><span class="font-semibold">B</span></template>
+            <template #x><span class="font-semibold">X</span></template>
+            <template #n><br></template>
+          </i18n-t>
         </p>
       </div>
 
@@ -342,7 +366,7 @@ const playAudio = audio => {
         </div>
 
         <div class="mt-2 flex justify-center items-center gap-2">
-          <span class="basis-1/4 text-gray-900 text-left">Trials</span>
+          <span class="basis-1/4 text-gray-900 text-left">{{ $t('trials') }}</span>
 
           <div class="w-full flex justify-center items-center gap-2">
             <ARadio id="trials-5" name="maxTrial" :value="5"
@@ -369,14 +393,14 @@ const playAudio = audio => {
         </p>
 
         <AButton :disabled="loadingAudio" type="submit" class="mt-4">
-          Start
+          {{ $t('start') }}
         </AButton>
       </form>
     </div>
 
     <div v-if="trialNo >= 1 && trialNo <= maxTrial">
       <h1 class="text-3xl font-semibold text-gray-900">
-        Trial {{ trialNo }} of {{ maxTrial }}
+        {{ $t('trialOf', [trialNo, maxTrial]) }}
       </h1>
 
       <p class="mt-2 text-lg text-gray-900">
@@ -384,7 +408,7 @@ const playAudio = audio => {
       </p>
 
       <div class="mt-4 mx-auto max-w-96">
-        <p>Listen</p>
+        <p>{{ $t('listen') }}</p>
         <div class="mt-1 flex justify-between items-center gap-2">
           <ARadio id="audio-a" name="audio" value="a" v-model="audio"
             @click="playAudio('a')" class="w-full">
@@ -404,26 +428,26 @@ const playAudio = audio => {
       </div>
 
       <div class="mt-4 mx-auto max-w-96">
-        <p>Choose</p>
+        <p>{{ $t('choose') }}</p>
         <div class="mt-1 flex justify-between items-center gap-2">
           <ARadio id="choice-a" name="choice" value="a" v-model="choice" class="w-full">
-            X is A
+            {{ $t('xIsX', ['A']) }}
           </ARadio>
 
           <ARadio id="choice-b" name="choice" value="b" v-model="choice" class="w-full">
-            X is B
+            {{ $t('xIsX', ['B']) }}
           </ARadio>
         </div>
       </div>
 
       <AButton :disabled="choice == null" @click="next" class="mt-4">
-        {{ trialNo != maxTrial ? 'Next' : 'Finish' }}
+        {{ trialNo != maxTrial ? $t('next') : $t('finish') }}
       </AButton>
     </div>
 
     <div v-if="trialNo > maxTrial">
       <h1 class="text-3xl font-semibold text-gray-900">
-        Result
+        {{ $t('result') }}
       </h1>
 
       <p class="mt-2 text-lg text-gray-900">
@@ -431,21 +455,21 @@ const playAudio = audio => {
       </p>
 
       <p class="mt-4 text-gray-900">
-        You got {{ score }} correct out of {{ maxTrial }}
+        {{ $t('score', { score: score, maxTrial: maxTrial }) }}
         ({{ (score / maxTrial * 100).toFixed() }}%)
       </p>
 
       <p class="text-gray-900">
-        You probably {{ score <= minScore ? 'cannot' : 'can' }} hear the difference
+        {{ $t('resultText', { ability: score <= minScore ? $t('cannot') : $t('can') }) }}
       </p>
 
       <div class="mt-4 flex justify-center items-center gap-2">
         <AButton @click="restart">
-          Restart
+          {{ $t('restart') }}
         </AButton>
         
         <AButton @click="backToHome">
-          Back to Home
+          {{ $t('backHome') }}
         </AButton>
       </div>
     </div>
