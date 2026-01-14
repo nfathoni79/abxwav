@@ -1,22 +1,32 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useDatabase } from 'vuefire'
+import { ref as dbRef, push, serverTimestamp } from 'firebase/database'
+import DeviceDetector from 'device-detector-js'
+
 import AButton from './components/AButton.vue'
 import ARadio from './components/ARadio.vue'
 import SoundIcon from './components/SoundIcon.vue'
 
 const { locale } = useI18n()
 
+const db = useDatabase()
+const resultsRef = dbRef(db, 'abxwav/results')
+
 const audioOptions = ref([
   {
+    id: 'll16',
     name: 'Lossless 16-bit',
     audioUrl: '/mayoiuta-f-16.wav',
   },
   {
+    id: 'ly320',
     name: 'Lossy 320kbps',
     audioUrl: '/mayoiuta-f-320.mp3',
   },
   {
+    id: 'ly128',
     name: 'Lossy 128kbps',
     audioUrl: '/mayoiuta-f-128.mp3',
   },
@@ -93,6 +103,12 @@ watch([audioAReady, audioBReady], ([newA, newB]) => {
     generateTrials()
     choices.value = []
     trialNo.value = 1
+  }
+})
+
+watch(trialNo, (newNo) => {
+  if (newNo > maxTrial.value) {
+    pushResult()
   }
 })
 
@@ -296,6 +312,34 @@ const playAudio = audio => {
 
 const saveLocale = () => {
   localStorage.setItem('locale', locale.value)
+}
+
+const getDeviceInfo = () => {
+  const detector = new DeviceDetector()
+  const parsed = detector.parse(navigator.userAgent)
+
+  const client = [parsed.client?.name, parsed.client?.version].filter(Boolean).join(' ')
+  const device = [parsed.device?.brand, parsed.device?.model, parsed.device?.type].filter(Boolean).join(' ')
+  const os = [parsed.os?.name, parsed.os?.version, parsed.os?.platform].filter(Boolean).join(' ')
+  return [client, device, os].filter(Boolean).join(', ')
+}
+
+const pushResult = () => {
+  const result = {
+    audioA: audioOptions.value[optionA.value].id,
+    audioB: audioOptions.value[optionB.value].id,
+    points: choices.value.map((choice, index) => {
+      return choice == trials.value[index] ? 1 : 0
+    }).join(''),
+    device: getDeviceInfo(),
+    createdAt: serverTimestamp(),
+  }
+  
+  push(resultsRef, result)
+    .then(() => { })
+    .catch((error) => {
+      console.error('Push error:', error)
+    })
 }
 </script>
 
