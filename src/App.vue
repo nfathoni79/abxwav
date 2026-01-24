@@ -14,32 +14,47 @@ const { locale } = useI18n()
 const db = useDatabase()
 const resultsRef = dbRef(db, 'abxwav/results')
 
-const audioOptions = ref([
+const songs = ref([
   {
-    id: 'll16',
-    name: 'Lossless 16-bit',
-    audioUrl: '/mayoiuta-f-16.wav',
+    id: 'mayo',
+    name: 'Mayoiuta - MyGO!!!!!',
   },
   {
-    id: 'ly320',
-    name: 'Lossy 320kbps',
-    audioUrl: '/mayoiuta-f-320.mp3',
-  },
-  {
-    id: 'ly128',
-    name: 'Lossy 128kbps',
-    audioUrl: '/mayoiuta-f-128.mp3',
+    id: 'avem',
+    name: 'Ave Mujica - Ave Mujica',
   },
 ])
-const optionA = ref(0)
-const optionB = ref(1)
+
+const audioOptions = ref([
+  {
+    id: 'wav-24',
+    name: 'Hi-Res Lossless 24-bit',
+  },
+  {
+    id: 'wav-16',
+    name: 'Lossless 16-bit',
+  },
+  {
+    id: 'mp3-320',
+    name: 'Lossy 320kbps',
+  },
+  {
+    id: 'mp3-256',
+    name: 'Lossy 256kbps',
+  },
+  {
+    id: 'mp3-128',
+    name: 'Lossy 128kbps',
+  },
+])
+
+const song = ref(0)
+const optionA = ref(1)
+const optionB = ref(2)
 
 const maxTrial = ref(10)
 const trialNo = ref(0)
 const trials = ref([])
-
-const audioAUrl = ref(null)
-const audioBUrl = ref(null)
 
 const audioA = ref(null)
 const audioB = ref(null)
@@ -55,6 +70,20 @@ const loadingProgress = ref(0)
 
 const choice = ref(null)
 const choices = ref([])
+
+const audioAUrl = computed(() => {
+  const nameId = songs.value[song.value].id
+  const [format, quality] = audioOptions.value[optionA.value].id.split('-')
+
+  return `/${nameId}-${quality}.${format}`
+})
+
+const audioBUrl = computed(() => {
+  const nameId = songs.value[song.value].id
+  const [format, quality] = audioOptions.value[optionB.value].id.split('-')
+
+  return `/${nameId}-${quality}.${format}`
+})
 
 const score = computed(() => {
   if (trials.value.length != choices.value.length) return 0
@@ -326,6 +355,7 @@ const getDeviceInfo = () => {
 
 const pushResult = () => {
   const result = {
+    song: songs.value[song.value].id,
     audioA: audioOptions.value[optionA.value].id,
     audioB: audioOptions.value[optionB.value].id,
     points: choices.value.map((choice, index) => {
@@ -377,6 +407,21 @@ const pushResult = () => {
       </div>
 
       <form @submit.prevent="start" class="mt-4">
+        <label for="song"
+          class="mt-2 flex justify-center items-center gap-2 sm:gap-0">
+          
+          <span class="basis-1/4 text-gray-900 text-left">{{ $t('song') }}</span>
+          <select id="song" name="song" v-model="song"
+            class="w-full border border-gray-900 rounded-lg
+            focus:ring-0 focus:border-2 focus:border-gray-900">
+            
+            <option v-for="(item, index) in songs" :key="index"
+              :value="index">
+              {{ item.name }}
+            </option>
+          </select>
+        </label>
+
         <div class="mt-2 flex flex-col sm:flex-row gap-2">
           <label for="optionA"
             class="flex-1 flex flex-row sm:flex-col justify-center items-center
@@ -448,6 +493,7 @@ const pushResult = () => {
       </h1>
 
       <p class="mt-2 text-lg text-gray-900">
+        {{ songs[song].name }}<br>
         {{ audioOptions[optionA].name }} <span class="font-semibold">vs</span> {{ audioOptions[optionB].name }}
       </p>
 
@@ -495,6 +541,7 @@ const pushResult = () => {
       </h1>
 
       <p class="mt-2 text-lg text-gray-900">
+        {{ songs[song].name }}<br>
         {{ audioOptions[optionA].name }} <span class="font-semibold">vs</span> {{ audioOptions[optionB].name }}
       </p>
 

@@ -19,6 +19,7 @@ const i18n = createI18n({
     en: {
       description: 'Test your ears to hear the difference between two audio files',
       help: 'You will receive two reference samples, labeled {a} and {b}, along with a target sample, {x}.{n} Your task is to determine whether sample {x} corresponds to sample {a} or sample {b}.',
+      song: 'Song',
       trials: 'Trials',
       trialOf: 'Trial {0} of {1}',
       start: 'Start',
@@ -38,6 +39,7 @@ const i18n = createI18n({
     id: {
       description: 'Uji telinga Anda untuk mendengar perbedaan antara dua file audio',
       help: 'Anda akan menerima dua sampel referensi, yang diberi label {a} dan {b}, beserta sampel target, {x}.{n} Tugas Anda adalah menentukan apakah sampel {x} sama dengan sampel {a} atau sampel {b}.',
+      song: 'Lagu',
       trials: 'Percobaan',
       trialOf: 'Percobaan {0} dari {1}',
       start: 'Mulai',
