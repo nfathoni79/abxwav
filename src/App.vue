@@ -551,7 +551,14 @@ const pushResult = () => {
       </p>
 
       <p class="text-gray-900">
-        {{ $t('resultText', { ability: score <= minScore ? $t('cannot') : $t('can') }) }}
+        <!-- {{ $t('resultText', { ability: score <= minScore ? $t('cannot') : $t('can') }) }} -->
+        <i18n-t keypath="resultText">
+          <template #ability>
+            <span class="font-semibold uppercase">
+              {{ score <= minScore ? $t('cannot') : $t('can') }}
+            </span>
+          </template>
+        </i18n-t>
       </p>
 
       <div class="mt-4 flex justify-center items-center gap-2">
