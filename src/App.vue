@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDatabase } from 'vuefire'
-import { ref as dbRef, push, serverTimestamp } from 'firebase/database'
+import { ref as dbRef, get, set, push, serverTimestamp } from 'firebase/database'
 import DeviceDetector from 'device-detector-js'
 
 import AButton from './components/AButton.vue'
@@ -13,6 +13,7 @@ const { locale } = useI18n()
 
 const db = useDatabase()
 const resultsRef = dbRef(db, 'abxwav/results')
+const statsRef = dbRef(db, 'abxwav/stats')
 
 const songs = ref([
   {
@@ -144,6 +145,8 @@ watch(trialNo, (newNo) => {
 onMounted(() => {
   audioAUrl.value = audioOptions.value[optionA.value].audioUrl
   audioBUrl.value = audioOptions.value[optionB.value].audioUrl
+
+  createStats()
 })
 
 const start = async () => {
@@ -366,10 +369,88 @@ const pushResult = () => {
   }
   
   push(resultsRef, result)
-    .then(() => { })
+    .then(() => {
+      createStats()
+    })
     .catch((error) => {
       console.error('Push error:', error)
     })
+}
+
+const getCategory = (catA, catB) => {
+  const [newCatA, newCatB] = [catA, catB].sort((a, b) => {
+    const orderA = audioOptions.value.findIndex((item) => item.id == a)
+    const orderB = audioOptions.value.findIndex((item) => item.id == b)
+
+    return orderA - orderB
+  })
+
+  return `${newCatA}-vs-${newCatB}`
+}
+
+const createStats = async () => {
+  let nextUpdate = 0
+  const now = Date.now()
+
+  // Fetch nextUpdate
+  await get(statsRef).then((snapshot) => {
+    if (snapshot.exists()) {
+      nextUpdate = snapshot.child('nextUpdate').val()
+    } else {
+      console.log('No stats data.')
+    }
+  }).catch((error) => {
+    console.error(error)
+  })
+
+  // Skip if now is less than nextUpdate
+  if (now < nextUpdate) return
+
+  let stats = {}
+
+  // Fetch results and create stats
+  await get(resultsRef).then((snapshot) => {
+    if (snapshot.exists()) {
+      snapshot.forEach((childSnapshot) => {
+        const result = childSnapshot.val()
+        const trials = result.points.length
+        
+        if (trials < 10) return
+        
+        const category = getCategory(result.audioA, result.audioB)
+        const points = result.points.split('1').length - 1
+
+        const isPassed = () => {
+          if (trials == 10 && points >= 9) return true
+          if (trials == 20 && points >= 15) return true
+          return false
+        }
+
+        // Initialize stats[category] if undefined
+        if (!stats[category]) stats[category] = {
+          t10: {
+            passed: 0,
+            notPassed: 0,
+          },
+          t20: {
+            passed: 0,
+            notPassed: 0,
+          },
+        }
+
+        stats[category][`t${trials}`][isPassed() ? 'passed' : 'notPassed']++
+      })
+    } else {
+      console.log('No results data')
+    }
+  }).catch((error) => {
+    console.error(error)
+  })
+
+  nextUpdate = now + (1 * 60 * 60 * 1000)  // Add 1 hour
+  
+  // Overwrite stats
+  await set(statsRef, { stats, nextUpdate })
 }
 </script>
 
@@ -551,7 +632,6 @@ const pushResult = () => {
       </p>
 
       <p class="text-gray-900">
-        <!-- {{ $t('resultText', { ability: score <= minScore ? $t('cannot') : $t('can') }) }} -->
         <i18n-t keypath="resultText">
           <template #ability>
             <span class="font-semibold uppercase">
