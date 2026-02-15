@@ -566,6 +566,16 @@ const createStats = async () => {
           {{ $t('start') }}
         </AButton>
       </form>
+
+      <div class="mt-4">
+        <i18n-t keypath="request" tag="p">
+          <a href="https://forms.gle/qFd4JcAoc5kkkJ6a9" target="_blank"
+            class="font-semibold hover:underline decoration-2">
+            
+            {{ $t('here') }}
+          </a>
+        </i18n-t>
+      </div>
     </div>
 
     <div v-if="trialNo >= 1 && trialNo <= maxTrial">
