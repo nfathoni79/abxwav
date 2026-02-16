@@ -72,6 +72,8 @@ const loadingProgress = ref(0)
 const choice = ref(null)
 const choices = ref([])
 
+const uuid = ref(null)
+
 const audioAUrl = computed(() => {
   const nameId = songs.value[song.value].id
   const [format, quality] = audioOptions.value[optionA.value].id.split('-')
@@ -146,7 +148,7 @@ onMounted(() => {
   audioAUrl.value = audioOptions.value[optionA.value].audioUrl
   audioBUrl.value = audioOptions.value[optionB.value].audioUrl
 
-  createStats()
+  loadUuid()
 })
 
 const start = async () => {
@@ -346,6 +348,16 @@ const saveLocale = () => {
   localStorage.setItem('locale', locale.value)
 }
 
+const loadUuid = () => {
+  uuid.value = localStorage.getItem('uuid')
+
+  if (!uuid.value) {
+    const randomUuid = crypto.randomUUID()
+    uuid.value = randomUuid
+    localStorage.setItem('uuid', randomUuid)
+  }
+}
+
 const getDeviceInfo = () => {
   const detector = new DeviceDetector()
   const parsed = detector.parse(navigator.userAgent)
@@ -365,6 +377,7 @@ const pushResult = () => {
       return choice == trials.value[index] ? 1 : 0
     }).join(''),
     device: getDeviceInfo(),
+    uuid: uuid.value,
     createdAt: serverTimestamp(),
   }
   
