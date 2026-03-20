@@ -658,7 +658,7 @@ const createStats = async () => {
         <i18n-t keypath="resultText">
           <template #ability>
             <span class="font-semibold uppercase">
-              {{ score <= minScore ? $t('cannot') : $t('can') }}
+              {{ score < minScore ? $t('cannot') : $t('can') }}
             </span>
           </template>
         </i18n-t>
