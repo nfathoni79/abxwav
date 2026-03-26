@@ -19,10 +19,17 @@ const songs = ref([
   {
     id: 'mayo',
     name: 'Mayoiuta - MyGO!!!!!',
+    hasHires: true,
   },
   {
     id: 'avem',
     name: 'Ave Mujica - Ave Mujica',
+    hasHires: true,
+  },
+  {
+    id: 'rahm',
+    name: 'Rahmatun Lil’Alameen - Maher Zain',
+    hasHires: false,
   },
 ])
 
@@ -117,6 +124,13 @@ const minScore = computed(() => {
 
 const audioPlaying = computed(() => {
   return audioAPlaying.value || audioBPlaying.value
+})
+
+watch(song, newSong => {
+  if (!songs.value[newSong].hasHires) {
+    optionA.value = 1
+    optionB.value = 2
+  }
 })
 
 watch(optionA, newOption => {
@@ -526,7 +540,8 @@ const createStats = async () => {
               class="w-full border border-gray-900 rounded-lg
               focus:ring-0 focus:border-2 focus:border-gray-900">
               <option v-for="(item, index) in audioOptions" :key="index"
-                :value="index" :disabled="optionB == index">
+                :value="index"
+                :disabled="optionB == index || (index == 0 && !songs[song].hasHires)">
                 {{ item.name }}
               </option>
             </select>
@@ -541,7 +556,8 @@ const createStats = async () => {
               class="w-full border border-gray-900 rounded-lg
               focus:ring-0 focus:border-2 focus:border-gray-900">
               <option v-for="(item, index) in audioOptions" :key="index"
-                :value="index" :disabled="optionA == index">
+                :value="index"
+                :disabled="optionA == index || (index == 0 && !songs[song].hasHires)">
                 {{ item.name }}
               </option>
             </select>
