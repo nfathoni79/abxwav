@@ -39,6 +39,8 @@ const choices = ref([]) // Choices of each trial
 // Audio objects
 const audioA = ref(null)
 const audioB = ref(null)
+const audioCurrentTime = ref(0)
+const audioDuration = ref(null)
 
 const audioAReady = ref(false)
 const audioBReady = ref(false)
@@ -65,6 +67,12 @@ const qualityB = computed(() => {
 
 const totalSize = computed(() => {
   return song.value.files[qualityAId.value].size + song.value.files[qualityBid.value].size
+})
+
+const audioProgress = computed(() => {
+  if (audioDuration.value == null) return 0
+
+  return (audioCurrentTime.value / audioDuration.value) * 100
 })
 
 const score = computed(() => {
@@ -217,10 +225,12 @@ const start = async () => {
 
   const handleAudioPlayback = (audio, playing) => {
     if (audio == 'a') {
+      audioDuration.value = audioA.value.duration
       audioAPlaying.value = playing
     }
 
     if (audio == 'b') {
+      audioDuration.value = audioB.value.duration
       audioBPlaying.value = playing
     }
   }
@@ -231,6 +241,14 @@ const start = async () => {
   audioB.value.addEventListener('play', () => handleAudioPlayback('b', true))
   audioB.value.addEventListener('pause', () => handleAudioPlayback('b', false))
   audioB.value.addEventListener('ended', () => handleAudioPlayback('b', false))
+
+  audioA.value.addEventListener('timeupdate', () => {
+    audioCurrentTime.value = audioA.value.currentTime
+  })
+
+  audioB.value.addEventListener('timeupdate', () => {
+    audioCurrentTime.value = audioB.value.currentTime
+  })
 
   setTimeout(() => {
     if (!audioAReady.value || !audioBReady.value) {
@@ -308,6 +326,14 @@ const playAudio = audio => {
 
   if (audio == 'b') {
     audioB.value.play()
+  }
+}
+
+const seekAudio = time => {
+  if (audioAPlaying.value) {
+    audioA.value.currentTime += time
+  } else {
+    audioB.value.currentTime += time
   }
 }
 
@@ -597,19 +623,43 @@ const createStats = async () => {
         <p>{{ $t('listen') }}</p>
         <div class="mt-1 flex justify-between items-center gap-2">
           <ARadio id="audio-a" name="audio" value="a" v-model="audio"
-            @click="playAudio('a')" class="w-full">
-            A <SoundIcon v-if="audio == 'a' && audioPlaying" class="ml-2 h-5" />
+            @click="playAudio('a')" class="w-full flex-col">
+            <div class="flex items-center">
+              A <SoundIcon v-if="audio == 'a' && audioPlaying" class="ml-2 h-5" />
+            </div>
+            <div v-if="audio == 'a' && audioPlaying" class="w-full">
+              <Progress :percentage="audioProgress" />
+            </div>
           </ARadio>
 
           <ARadio id="audio-x" name="audio" value="x" v-model="audio"
-            @click="playAudio(trials[trialNo - 1])" class="w-full">
-            X <SoundIcon v-if="audio == 'x' && audioPlaying" class="ml-2 h-5" />
+            @click="playAudio(trials[trialNo - 1])" class="w-full flex-col">
+            <div class="flex items-center">
+              X <SoundIcon v-if="audio == 'x' && audioPlaying" class="ml-2 h-5" />
+            </div>
+            <div v-if="audio == 'x' && audioPlaying" class="w-full">
+              <Progress :percentage="audioProgress" />
+            </div>
           </ARadio>
 
           <ARadio id="audio-b" name="audio" value="b" v-model="audio"
-            @click="playAudio('b')" class="w-full">
-            B <SoundIcon v-if="audio == 'b' && audioPlaying" class="ml-2 h-5" />
+            @click="playAudio('b')" class="w-full flex-col">
+            <div class="flex items-center">
+              B <SoundIcon v-if="audio == 'b' && audioPlaying" class="ml-2 h-5" />
+            </div>
+            <div v-if="audio == 'b' && audioPlaying" class="w-full">
+              <Progress :percentage="audioProgress" />
+            </div>
           </ARadio>
+        </div>
+
+        <div class="mt-1 flex justify-center items-center gap-2">
+          <AButton :disabled="!audioPlaying" @click="seekAudio(-5)">
+            {{ $t('plusSeconds') }}
+          </AButton>
+          <AButton :disabled="!audioPlaying" @click="seekAudio(5)">
+            {{ $t('minusSeconds') }}
+          </AButton>
         </div>
       </div>
 
