@@ -8,91 +8,63 @@ import DeviceDetector from 'device-detector-js'
 import AButton from './components/AButton.vue'
 import ARadio from './components/ARadio.vue'
 import SoundIcon from './components/SoundIcon.vue'
+import Progress from './components/Progress.vue'
+
+import songs from './data/songs'
+import qualities from './data/qualities'
 
 const { locale } = useI18n()
 
+// Firebase
 const db = useDatabase()
-const resultsRef = dbRef(db, 'abxwav/results')
-const statsRef = dbRef(db, 'abxwav/stats')
+const resultsRef = dbRef(db, 'abxwav/results2')
+const statsRef = dbRef(db, 'abxwav/stats2')
 
-const songs = ref([
-  {
-    id: 'mayo',
-    name: 'Mayoiuta - MyGO!!!!!',
-    hasHires: true,
-  },
-  {
-    id: 'avem',
-    name: 'Ave Mujica - Ave Mujica',
-    hasHires: true,
-  },
-  {
-    id: 'rahm',
-    name: 'Rahmatun Lil’Alameen - Maher Zain',
-    hasHires: false,
-  },
-])
-
-const audioOptions = ref([
-  {
-    id: 'wav-24',
-    name: 'Hi-Res Lossless 24-bit',
-  },
-  {
-    id: 'wav-16',
-    name: 'Lossless 16-bit',
-  },
-  {
-    id: 'mp3-320',
-    name: 'Lossy 320kbps',
-  },
-  {
-    id: 'mp3-256',
-    name: 'Lossy 256kbps',
-  },
-  {
-    id: 'mp3-128',
-    name: 'Lossy 128kbps',
-  },
-])
-
-const song = ref(0)
-const optionA = ref(1)
-const optionB = ref(2)
-
+// Bind to inputs
+const songId = ref(songs[0].id)
+const qualityAId = ref('wav_16')
+const qualityBid = ref('mp3_320')
 const maxTrial = ref(10)
-const trialNo = ref(0)
-const trials = ref([])
+const audio = ref(null)
+const choice = ref(null)
 
+// Timestamps of the start and end of test
+const startAt = ref(null)
+const endAt = ref(null)
+
+const trialNo = ref(0)  // Current trial number
+const trials = ref([])  // Answers of each trial
+const choices = ref([]) // Choices of each trial
+
+// Audio objects
 const audioA = ref(null)
 const audioB = ref(null)
+
 const audioAReady = ref(false)
 const audioBReady = ref(false)
-const audio = ref(null)
 const audioAPlaying = ref(false)
 const audioBPlaying = ref(false)
 
-const loadingAudio = ref(false)
+const audioLoading = ref(false)
 const startInfo = ref('')
 const loadingProgress = ref(0)
 
-const choice = ref(null)
-const choices = ref([])
-
 const uuid = ref(null)
 
-const audioAUrl = computed(() => {
-  const nameId = songs.value[song.value].id
-  const [format, quality] = audioOptions.value[optionA.value].id.split('-')
-
-  return `/${nameId}-${quality}.${format}`
+const song = computed(() => {
+  return songs.find(s => s.id == songId.value)
 })
 
-const audioBUrl = computed(() => {
-  const nameId = songs.value[song.value].id
-  const [format, quality] = audioOptions.value[optionB.value].id.split('-')
+const qualityA = computed(() => {
+  return qualities.find(q => q.id == qualityAId.value)
+})
 
-  return `/${nameId}-${quality}.${format}`
+const qualityB = computed(() => {
+  return qualities.find(q => q.id == qualityBid.value)
+})
+
+const totalSize = computed(() => {
+  return song.value.files[qualityAId.value].size + song.value.files[qualityBid.value].size
 })
 
 const score = computed(() => {
@@ -126,81 +98,61 @@ const audioPlaying = computed(() => {
   return audioAPlaying.value || audioBPlaying.value
 })
 
+// When switching song, reset qualities selected
 watch(song, newSong => {
-  if (!songs.value[newSong].hasHires) {
-    optionA.value = 1
-    optionB.value = 2
-  }
+  qualityAId.value = 'wav_16'
+  qualityBid.value = 'mp3_320'
 })
 
-watch(optionA, newOption => {
-  audioAUrl.value = audioOptions.value[newOption].audioUrl
-})
-
-watch(optionB, newOption => {
-  audioBUrl.value = audioOptions.value[newOption].audioUrl
-})
-
+// When both audio ready, start test
 watch([audioAReady, audioBReady], ([newA, newB]) => {
   if (newA && newB) {
-    loadingAudio.value = false
+    audioLoading.value = false
     startInfo.value = ''
 
     generateTrials()
     choices.value = []
     trialNo.value = 1
+    startAt.value = Date.now()
   }
 })
 
+// When test ended, push result to DB
 watch(trialNo, (newNo) => {
   if (newNo > maxTrial.value) {
+    endAt.value = Date.now()
     pushResult()
   }
 })
 
 onMounted(() => {
-  audioAUrl.value = audioOptions.value[optionA.value].audioUrl
-  audioBUrl.value = audioOptions.value[optionB.value].audioUrl
-
   loadUuid()
 })
 
 const start = async () => {
-  if (!audioAUrl.value || !audioBUrl.value) {
-    startInfo.value = 'Invalid audio'
-    return
-  }
-
-  loadingAudio.value = true
+  audioLoading.value = true
   startInfo.value = 'Loading audio...'
-  let newAudioAUrl = audioAUrl.value
-  let newAudioBUrl = audioBUrl.value
-  
-  if (!audioAUrl.value.startsWith('/')) {
-    newAudioAUrl = `https://cobacors.my.id/${audioAUrl.value}`
-  }
 
-  if (!audioBUrl.value.startsWith('/')) {
-    newAudioBUrl = `https://cobacors.my.id/${audioBUrl.value}`
-  }
+  const audioAUrl = song.value.files[qualityAId.value].url
+  const audioBUrl = song.value.files[qualityBid.value].url
 
-  const responseA = await fetch(newAudioAUrl)
+  const responseA = await fetch(audioAUrl)
   .catch(error => {
     startInfo.value = error.message
   })
 
   if (!responseA) {
-    loadingAudio.value = false
+    audioLoading.value = false
     return
   }
 
-  const responseB = await fetch(newAudioBUrl)
+  const responseB = await fetch(audioBUrl)
   .catch(error => {
     startInfo.value = error.message
   })
 
   if (!responseB) {
-    loadingAudio.value = false
+    audioLoading.value = false
     return
   }
 
@@ -208,7 +160,7 @@ const start = async () => {
   const contentLengthB = responseB.headers.get('Content-Length')
 
   if (!contentLengthA || !contentLengthB) {
-    loadingAudio.value = false
+    audioLoading.value = false
     startInfo.value = 'Invalid audio'
     return
   }
@@ -229,7 +181,7 @@ const start = async () => {
     received += value.length
 
     // Call the progress callback with the percentage
-    loadingProgress.value = ((received / total) * 100).toFixed(2)
+    loadingProgress.value = (received / total) * 100
   }
 
   while (true) {
@@ -239,7 +191,7 @@ const start = async () => {
     chunksB.push(value)
     received += value.length
 
-    loadingProgress.value = ((received / total) * 100).toFixed(2)
+    loadingProgress.value = (received / total) * 100
   }
 
   // Concatenate chunks and create a Blob
@@ -282,7 +234,7 @@ const start = async () => {
 
   setTimeout(() => {
     if (!audioAReady.value || !audioBReady.value) {
-      loadingAudio.value = false
+      audioLoading.value = false
       startInfo.value = 'Invalid audio'
       loadingProgress.value = 0
     }
@@ -313,6 +265,7 @@ const restart = () => {
   generateTrials()
   choices.value = []
   trialNo.value = 1
+  startAt.value = Date.now()
 }
 
 const backToHome = () => {
@@ -384,14 +337,17 @@ const getDeviceInfo = () => {
 
 const pushResult = () => {
   const result = {
-    song: songs.value[song.value].id,
-    audioA: audioOptions.value[optionA.value].id,
-    audioB: audioOptions.value[optionB.value].id,
+    song: song.value.id,
+    audioA: qualityAId.value,
+    audioB: qualityBid.value,
     points: choices.value.map((choice, index) => {
       return choice == trials.value[index] ? 1 : 0
     }).join(''),
     device: getDeviceInfo(),
     uuid: uuid.value,
+    startAt: startAt.value,
+    endAt: endAt.value,
+    time: Math.round((endAt.value - startAt.value) / 1000),
     createdAt: serverTimestamp(),
   }
   
@@ -406,8 +362,8 @@ const pushResult = () => {
 
 const getCategory = (catA, catB) => {
   const [newCatA, newCatB] = [catA, catB].sort((a, b) => {
-    const orderA = audioOptions.value.findIndex((item) => item.id == a)
-    const orderB = audioOptions.value.findIndex((item) => item.id == b)
+    const orderA = qualities.findIndex(q => q.id == a)
+    const orderB = qualities.findIndex(q => q.id == b)
 
     return orderA - orderB
   })
@@ -482,7 +438,7 @@ const createStats = async () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-screen-sm min-h-screen bg-white p-8 text-center">
+  <div class="mx-auto max-w-screen-sm min-h-screen bg-white px-4 sm:px-8 py-8 text-center">
     <div v-if="trialNo < 1">
       <div class="relative">
         <h1 class="text-3xl font-semibold text-gray-900">ABX WAV</h1>
@@ -518,17 +474,23 @@ const createStats = async () => {
         <label for="song"
           class="mt-2 flex justify-center items-center gap-2 sm:gap-0">
           
-          <span class="basis-1/4 text-gray-900 text-left">{{ $t('song') }}</span>
-          <select id="song" name="song" v-model="song"
+          <span class="basis-1/4 sm:basis-1/5 text-gray-900 text-left">{{ $t('song') }}</span>
+          <select id="song" name="song" v-model="songId"
             class="w-full border border-gray-900 rounded-lg
             focus:ring-0 focus:border-2 focus:border-gray-900">
             
             <option v-for="(item, index) in songs" :key="index"
-              :value="index">
+              :value="item.id">
               {{ item.name }}
             </option>
           </select>
         </label>
+
+        <a :href="song.source" target="_blank"
+          class="font-semibold text-sm hover:underline decoration-2">
+          
+          {{ $t('source') }}
+        </a>
 
         <div class="mt-2 flex flex-col sm:flex-row gap-2">
           <label for="optionA"
@@ -536,12 +498,12 @@ const createStats = async () => {
             gap-2 sm:gap-0">
             
             <span class="basis-1/4 text-gray-900 text-left">Audio A</span>
-            <select id="optionA" name="optionA" v-model="optionA"
+            <select id="qualityA" name="qualityA" v-model="qualityAId"
               class="w-full border border-gray-900 rounded-lg
               focus:ring-0 focus:border-2 focus:border-gray-900">
-              <option v-for="(item, index) in audioOptions" :key="index"
-                :value="index"
-                :disabled="optionB == index || (index == 0 && !songs[song].hasHires)">
+              <option v-for="(item, index) in qualities" :key="index"
+                :value="item.id"
+                :disabled="qualityBid == item.id || songs.find(s => s.id == songId).files[item.id] == null">
                 {{ item.name }}
               </option>
             </select>
@@ -552,12 +514,12 @@ const createStats = async () => {
             gap-2 sm:gap-0">
             
             <span class="basis-1/4 text-gray-900 text-left">Audio B</span>
-            <select id="optionB" name="optionB" v-model="optionB"
+            <select id="qualityB" name="qualityB" v-model="qualityBid"
               class="w-full border border-gray-900 rounded-lg
               focus:ring-0 focus:border-2 focus:border-gray-900">
-              <option v-for="(item, index) in audioOptions" :key="index"
-                :value="index"
-                :disabled="optionA == index || (index == 0 && !songs[song].hasHires)">
+              <option v-for="(item, index) in qualities" :key="index"
+                :value="item.id"
+                :disabled="qualityAId == item.id || songs.find(s => s.id == songId).files[item.id] == null">
                 {{ item.name }}
               </option>
             </select>
@@ -565,33 +527,47 @@ const createStats = async () => {
         </div>
 
         <div class="mt-2 flex justify-center items-center gap-2">
-          <span class="basis-1/4 text-gray-900 text-left">{{ $t('trials') }}</span>
+          <span class="basis-1/4 sm:basis-1/5 text-gray-900 text-left">{{ $t('trials') }}</span>
 
           <div class="w-full flex justify-center items-center gap-2">
             <ARadio id="trials-5" name="maxTrial" :value="5"
-              v-model="maxTrial" class="w-full">
-              5
+              v-model="maxTrial" class="w-full flex-1">
+              <div class="flex flex-col">
+                5
+                <span class="text-xs">({{ $t('lessAccurate') }})</span>
+              </div>
             </ARadio>
 
             <ARadio id="trials-10" name="maxTrial" :value="10"
-              v-model="maxTrial" class="w-full">
-              10
+              v-model="maxTrial" class="w-full flex-1">
+              <div class="flex flex-col">
+                10
+                <span class="text-xs">({{ $t('recommended') }})</span>
+              </div>
             </ARadio>
 
             <ARadio id="trials-20" name="maxTrial" :value="20"
-              v-model="maxTrial" class="w-full">
-              20
+              v-model="maxTrial" class="w-full flex-1">
+              <div class="flex flex-col">
+                20
+                <span class="text-xs">({{ $t('moreAccurate') }})</span>
+              </div>
             </ARadio>
           </div>
         </div>
 
-        <p v-if="startInfo" class="mt-2 text-gray-900">{{ startInfo }}</p>
+        <div class="mt-2">
+          <p class="text-sm text-gray-900">{{ $t('willDownload', { size: totalSize.toFixed(1) }) }}</p>
 
-        <p v-if="loadingAudio" class="mt-2 text-gray-900">
-          {{ loadingProgress }}%
-        </p>
+          <p v-if="startInfo" class="mt-2 text-gray-900">{{ startInfo }}</p>
 
-        <AButton :disabled="loadingAudio" type="submit" class="mt-4">
+          <div v-if="audioLoading" class="mt-2 text-gray-900">
+            <p>{{ loadingProgress.toFixed(2) }}%</p>
+            <Progress :percentage="loadingProgress" />
+          </div>
+        </div>
+
+        <AButton :disabled="audioLoading" type="submit" class="mt-4">
           {{ $t('start') }}
         </AButton>
       </form>
@@ -613,8 +589,8 @@ const createStats = async () => {
       </h1>
 
       <p class="mt-2 text-lg text-gray-900">
-        {{ songs[song].name }}<br>
-        {{ audioOptions[optionA].name }} <span class="font-semibold">vs</span> {{ audioOptions[optionB].name }}
+        {{ song.name }}<br>
+        {{ qualityA.name }} <span class="font-semibold">vs</span> {{ qualityB.name }}
       </p>
 
       <div class="mt-4 mx-auto max-w-96">
@@ -661,8 +637,8 @@ const createStats = async () => {
       </h1>
 
       <p class="mt-2 text-lg text-gray-900">
-        {{ songs[song].name }}<br>
-        {{ audioOptions[optionA].name }} <span class="font-semibold">vs</span> {{ audioOptions[optionB].name }}
+        {{ song.name }}<br>
+        {{ qualityA.name }} <span class="font-semibold">vs</span> {{ qualityB.name }}
       </p>
 
       <p class="mt-4 text-gray-900">
