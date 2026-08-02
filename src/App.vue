@@ -655,10 +655,10 @@ const createStats = async () => {
 
         <div class="mt-1 flex justify-center items-center gap-2">
           <AButton :disabled="!audioPlaying" @click="seekAudio(-5)">
-            {{ $t('plusSeconds') }}
+            {{ $t('minusSeconds') }}
           </AButton>
           <AButton :disabled="!audioPlaying" @click="seekAudio(5)">
-            {{ $t('minusSeconds') }}
+            {{ $t('plusSeconds') }}
           </AButton>
         </div>
       </div>
