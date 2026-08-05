@@ -54,6 +54,33 @@ export default [
     },
   },
   {
+    id: 'cruc',
+    name: 'Crucifix X - Ave Mujica',
+    source: 'https://music.apple.com/id/album/crucifix-x/1807241685?i=1807241976',
+    files: {
+      wav_24: {
+        url: 'https://files.catbox.moe/n4g73l.wav',
+        size: 27.9,
+      },
+      wav_16: {
+        url: 'https://files.catbox.moe/wsttui.wav',
+        size: 17.1,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/fnk2wa.mp3',
+        size: 3.9,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/j16zer.mp3',
+        size: 3.1,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/5gr5jk.mp3',
+        size: 1.5,
+      },
+    },
+  },
+  {
     id: 'idol',
     name: 'Idol - YOASOBI',
     source: 'https://music.apple.com/id/album/idol/1679278166?i=1679278167',
@@ -128,6 +155,54 @@ export default [
       mp3_128: {
         url: 'https://files.catbox.moe/0p0zsz.mp3',
         size: 1.6,
+      },
+    },
+  },
+  {
+    id: 'drow',
+    name: 'Drowning - Just Pete',
+    source: 'https://music.apple.com/id/album/drowning/6773506612?i=6773506614',
+    files: {
+      wav_24: null,
+      wav_16: {
+        url: 'https://files.catbox.moe/dtpzd0.wav',
+        size: 13,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/xzlvz3.mp3',
+        size: 3,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/fffkan.mp3',
+        size: 2.4,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/1mlj33.mp3',
+        size: 1.2,
+      },
+    },
+  },
+  {
+    id: 'spar',
+    name: 'Sparkly Spot - DOLLCHESTRA',
+    source: 'https://music.apple.com/id/album/sparkly-spot/1765319608?i=1765319609',
+    files: {
+      wav_24: null,
+      wav_16: {
+        url: 'https://files.catbox.moe/lza8id.wav',
+        size: 13.5,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/a2qss9.mp3',
+        size: 3.1,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/yqvtwq.mp3',
+        size: 2.4,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/o9u04f.mp3',
+        size: 1.2,
       },
     },
   },
