@@ -51,6 +51,8 @@ const audioLoading = ref(false)
 const startInfo = ref('')
 const loadingProgress = ref(0)
 
+const detailShowing = ref(false)
+
 const uuid = ref(null)
 
 const song = computed(() => {
@@ -553,7 +555,7 @@ const createStats = async () => {
         </div>
 
         <div class="mt-2 flex justify-center items-center gap-2">
-          <span class="basis-1/4 sm:basis-1/5 text-gray-900 text-left">{{ $t('trials') }}</span>
+          <span class="basis-1/4 sm:basis-1/5 text-gray-900 text-left">{{ $t('trial', 2) }}</span>
 
           <div class="w-full flex justify-center items-center gap-2">
             <ARadio id="trials-5" name="maxTrial" :value="5"
@@ -705,6 +707,41 @@ const createStats = async () => {
           </template>
         </i18n-t>
       </p>
+
+      <!-- Result Details -->
+      <div class="mt-2">
+        <div>
+          <button @click="detailShowing = !detailShowing"
+            class="font-semibold text-sm hover:underline decoration-2">
+          
+            {{ detailShowing ? $t('hideDetails') : $t('showDetails') }}
+          </button>
+        </div>
+
+        <div v-if=" detailShowing"
+          class="mt-2 inline-block rounded-lg border border-gray-900 overflow-hidden">
+          
+          <table class="w-auto border-collapse">
+            <thead class="border-b border-gray-900 bg-gray-100 text-gray-900 text-sm">
+              <tr>
+                <th class="px-4">{{ $t('trial') }}</th>
+                <th class="px-4">{{ $t('yourChoice') }}</th>
+                <th class="px-4">{{ $t('answer') }}</th>
+              </tr>
+            </thead>
+            
+            <tbody class="divide-y divide-gray-400 text-gray-900 text-sm uppercase">
+              <tr v-for="(trial, index) in trials" :key="index"
+                :class="trials[index] == choices[index] ? 'bg-green-200' : 'bg-red-200'">
+                
+                <td>{{ index + 1 }}</td>
+                <td>{{ choices[index] }}</td>
+                <td>{{ trials[index] }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <div class="mt-4 flex justify-center items-center gap-2">
         <AButton @click="restart">
