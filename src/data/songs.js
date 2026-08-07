@@ -135,6 +135,30 @@ export default [
     },
   },
   {
+    id: 'tada',
+    name: 'Just a Sunny Day for You - Yorushika',
+    source: 'https://music.apple.com/id/album/%E3%81%9F%E3%81%A0%E5%90%9B%E3%81%AB%E6%99%B4%E3%82%8C/1648875799?i=1648876333',
+    files: {
+      wav_24: null,
+      wav_16: {
+        url: 'https://files.catbox.moe/5rpghi.wav',
+        size: 15.2,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/c0qcpp.mp3',
+        size: 3.4,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/ztbxzl.mp3',
+        size: 2.8,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/ht4jg4.mp3',
+        size: 1.4,
+      },
+    },
+  },
+  {
     id: 'hito',
     name: 'One Wish - yuiko',
     source: 'https://music.apple.com/id/album/hitotsu-no-negai/1683465948?i=1683466015',
@@ -203,6 +227,54 @@ export default [
       mp3_128: {
         url: 'https://files.catbox.moe/o9u04f.mp3',
         size: 1.2,
+      },
+    },
+  },
+  {
+    id: 'unev',
+    name: 'Une Vie À T\'aimer - Lorien Testard',
+    source: 'https://music.apple.com/id/album/une-vie-%C3%A0-taimer/1808472460?i=1808472923',
+    files: {
+      wav_24: null,
+      wav_16: {
+        url: 'https://files.catbox.moe/u5hoh0.wav',
+        size: 16.7,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/quk8oy.mp3',
+        size: 3.8,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/ztqzwu.mp3',
+        size: 3,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/vv97lw.mp3',
+        size: 1.5,
+      },
+    },
+  },
+  {
+    id: 'qalb',
+    name: 'Qalbi Fil Madinah - Maher Zain, Harris J',
+    source: 'https://music.apple.com/id/album/qalbi-fil-madinah/1800614910?i=1800614915',
+    files: {
+      wav_24: null,
+      wav_16: {
+        url: 'https://files.catbox.moe/uv7wsk.wav',
+        size: 16.8,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/exrbzb.mp3',
+        size: 3.8,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/7wvao1.mp3',
+        size: 3.1,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/0nn0r9.mp3',
+        size: 1.5,
       },
     },
   },
