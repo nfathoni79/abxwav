@@ -10,6 +10,7 @@ import ARadio from './components/ARadio.vue'
 import SoundIcon from './components/SoundIcon.vue'
 import Progress from './components/Progress.vue'
 
+import { calculatePValue } from './utils'
 import songs from './data/songs'
 import qualities from './data/qualities'
 
@@ -91,17 +92,8 @@ const score = computed(() => {
   return current
 })
 
-const minScore = computed(() => {
-  switch (maxTrial.value) {
-    case 20:
-      return 15
-    case 10:
-      return 9
-    case 5:
-      return 5
-    default:
-      return 9
-  }
+const pValue = computed(() => {
+  return calculatePValue(score.value, maxTrial.value)
 })
 
 const audioPlaying = computed(() => {
@@ -695,21 +687,20 @@ const createStats = async () => {
 
       <p class="mt-4 text-gray-900">
         {{ $t('score', { score: score, maxTrial: maxTrial }) }}
-        ({{ (score / maxTrial * 100).toFixed() }}%)
       </p>
 
       <p class="text-gray-900">
         <i18n-t keypath="resultText">
           <template #ability>
             <span class="font-semibold uppercase">
-              {{ score < minScore ? $t('cannot') : $t('can') }}
+              {{ pValue <= 0.05 ? $t('can') : $t('cannot') }}
             </span>
           </template>
         </i18n-t>
       </p>
 
       <!-- Result Details -->
-      <div class="mt-2">
+      <div class="mt-4 rounded-lg bg-gray-100 p-2">
         <div>
           <button @click="detailShowing = !detailShowing"
             class="font-semibold text-sm hover:underline decoration-2">
@@ -718,28 +709,37 @@ const createStats = async () => {
           </button>
         </div>
 
-        <div v-if=" detailShowing"
-          class="mt-2 inline-block rounded-lg border border-gray-900 overflow-hidden">
-          
-          <table class="w-auto border-collapse">
-            <thead class="border-b border-gray-900 bg-gray-100 text-gray-900 text-sm">
-              <tr>
-                <th class="px-4">{{ $t('trial') }}</th>
-                <th class="px-4">{{ $t('yourChoice') }}</th>
-                <th class="px-4">{{ $t('answer') }}</th>
-              </tr>
-            </thead>
-            
-            <tbody class="divide-y divide-gray-400 text-gray-900 text-sm uppercase">
-              <tr v-for="(trial, index) in trials" :key="index"
-                :class="trials[index] == choices[index] ? 'bg-green-200' : 'bg-red-200'">
-                
-                <td>{{ index + 1 }}</td>
-                <td>{{ choices[index] }}</td>
-                <td>{{ trials[index] }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div v-if="detailShowing" class="mt-2">
+          <div class="inline-block rounded-lg border border-gray-900 overflow-hidden">
+            <table class="w-auto border-collapse">
+              <thead class="border-b border-gray-900 bg-gray-100 text-gray-900 text-sm">
+                <tr>
+                  <th class="px-4">{{ $t('trial') }}</th>
+                  <th class="px-4">{{ $t('yourChoice') }}</th>
+                  <th class="px-4">{{ $t('answer') }}</th>
+                </tr>
+              </thead>
+              
+              <tbody class="divide-y divide-gray-400 text-gray-900 text-sm uppercase">
+                <tr v-for="(trial, index) in trials" :key="index"
+                  :class="trials[index] == choices[index] ? 'bg-green-200' : 'bg-red-200'">
+                  
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ choices[index] }}</td>
+                  <td>{{ trials[index] }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="text-sm">
+            <a href="https://en.wikipedia.org/wiki/P-value" target="_blank"
+              class="font-semibold italic hover:underline decoration-2">
+              p-value
+            </a>
+            = {{ $n(pValue) }}<br>
+            {{ $t('pValueDetails') }}
+          </p>
         </div>
       </div>
 
