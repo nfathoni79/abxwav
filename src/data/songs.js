@@ -135,6 +135,30 @@ export default [
     },
   },
   {
+    id: 'choo',
+    name: 'Choose me - BAND-MAID',
+    source: 'https://music.apple.com/id/album/choose-me/1253769455?i=1253770874',
+    files: {
+      wav_24: null,
+      wav_16: {
+        url: 'https://files.catbox.moe/6grs3d.wav',
+        size: 13.7,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/cci4dr.mp3',
+        size: 3.1,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/3adsvy.mp3',
+        size: 2.5,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/tq57mt.mp3',
+        size: 1.2,
+      },
+    },
+  },
+  {
     id: 'tada',
     name: 'Just a Sunny Day for You - Yorushika',
     source: 'https://music.apple.com/id/album/%E3%81%9F%E3%81%A0%E5%90%9B%E3%81%AB%E6%99%B4%E3%82%8C/1648875799?i=1648876333',
@@ -154,6 +178,60 @@ export default [
       },
       mp3_128: {
         url: 'https://files.catbox.moe/ht4jg4.mp3',
+        size: 1.4,
+      },
+    },
+  },
+  {
+    id: 'hide',
+    name: 'Hide-And-Seek - AliA',
+    source: 'https://music.apple.com/id/album/hide-and-seek/1453264575?i=1453264751',
+    files: {
+      wav_24: {
+        url: 'https://files.catbox.moe/v0sp4q.wav',
+        size: 28,
+      },
+      wav_16: {
+        url: 'https://files.catbox.moe/jr34kc.wav',
+        size: 17.2,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/5o4y9z.mp3',
+        size: 3.9,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/7l5quh.mp3',
+        size: 3.1,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/zo14ws.mp3',
+        size: 1.6,
+      },
+    },
+  },
+  {
+    id: 'blin',
+    name: 'Bling-Bang-Bang-Born - Creepy Nuts',
+    source: 'https://music.apple.com/id/album/bling-bang-bang-born/1720332180?i=1720332181',
+    files: {
+      wav_24: {
+        url: 'https://files.catbox.moe/ivmteo.wav',
+        size: 25.9,
+      },
+      wav_16: {
+        url: 'https://files.catbox.moe/zikznf.wav',
+        size: 15.8,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/owjdju.mp3',
+        size: 3.6,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/glnikt.mp3',
+        size: 2.9,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/8vrezn.mp3',
         size: 1.4,
       },
     },
