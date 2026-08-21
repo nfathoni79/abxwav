@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDatabase } from 'vuefire'
 import { ref as dbRef, get, set, push, serverTimestamp } from 'firebase/database'
+import Dexie from 'dexie'
 import DeviceDetector from 'device-detector-js'
 
 import AButton from './components/AButton.vue'
@@ -15,6 +16,12 @@ import songs from './data/songs'
 import qualities from './data/qualities'
 
 const { locale } = useI18n()
+
+// Dexie
+const dxDb = new Dexie('AudioFileDb')
+dxDb.version(1).stores({
+  audios: 'url, blob'
+})
 
 // Firebase
 const db = useDatabase()
@@ -138,67 +145,66 @@ const start = async () => {
   const audioAUrl = song.value.files[qualityAId.value].url
   const audioBUrl = song.value.files[qualityBid.value].url
 
-  const responseA = await fetch(audioAUrl)
-  .catch(error => {
-    startInfo.value = error.message
+  let totalDownload = 0
+  let receivedDownload = 0
+
+  /**
+   * Fetch audio from URL and get the blob, or get the blob from cache.
+   * @param {string} url - Audio URL.
+   */
+  const fetchAudio = async (url) => {
+    const cache = await dxDb.audios.get(url)
+    if (cache) return cache.blob
+
+    const response = await fetch(url)
+    .catch(error => {
+      audioLoading.value = false
+      startInfo.value = error.message
+      throw error
+    })
+
+    const contentLength = response.headers.get('Content-Length')
+
+    if (!contentLength) {
+      audioLoading.value = false
+      startInfo.value = 'Invalid audio'
+      throw new Error(startInfo.value)
+    }
+
+    totalDownload += parseInt(contentLength)
+
+    const reader = response.body.getReader()
+    const chunks = []
+
+    // Read donwload progress
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      chunks.push(value)
+      receivedDownload += value.length
+
+      loadingProgress.value = (receivedDownload / totalDownload) * 100
+    }
+
+    const blob = new Blob(chunks)
+
+    // Cache to local DB
+    await dxDb.audios.put({
+      url: url,
+      blob: blob,
+    })
+
+    return blob
+  }
+
+  // Fetch 2 audios asynchronously
+  const [blobA, blobB] = await Promise.all(
+    [fetchAudio(audioAUrl), fetchAudio(audioBUrl)]
+  ).catch((error) => {
+    throw error
   })
 
-  if (!responseA) {
-    audioLoading.value = false
-    return
-  }
-
-  const responseB = await fetch(audioBUrl)
-  .catch(error => {
-    startInfo.value = error.message
-  })
-
-  if (!responseB) {
-    audioLoading.value = false
-    return
-  }
-
-  const contentLengthA = responseA.headers.get('Content-Length')
-  const contentLengthB = responseB.headers.get('Content-Length')
-
-  if (!contentLengthA || !contentLengthB) {
-    audioLoading.value = false
-    startInfo.value = 'Invalid audio'
-    return
-  }
-
-  const total = parseInt(contentLengthA) + parseInt(contentLengthB)
-  let received = 0
-  
-  const readerA = responseA.body.getReader()
-  const readerB = responseB.body.getReader()
-  const chunksA = []
-  const chunksB = []
-
-  while (true) {
-    const { done, value } = await readerA.read()
-    if (done) break
-
-    chunksA.push(value)
-    received += value.length
-
-    // Call the progress callback with the percentage
-    loadingProgress.value = (received / total) * 100
-  }
-
-  while (true) {
-    const { done, value } = await readerB.read()
-    if (done) break
-
-    chunksB.push(value)
-    received += value.length
-
-    loadingProgress.value = (received / total) * 100
-  }
-
-  // Concatenate chunks and create a Blob
-  const blobA = new Blob(chunksA)
-  const blobB = new Blob(chunksB)
   const blobUrlA = URL.createObjectURL(blobA)
   const blobUrlB = URL.createObjectURL(blobB)
 
@@ -733,11 +739,10 @@ const createStats = async () => {
           </div>
 
           <p class="text-sm">
+            <span class="font-semibold italic">p-value = {{ $n(pValue) }}</span>
             <a href="https://en.wikipedia.org/wiki/P-value" target="_blank"
-              class="font-semibold italic hover:underline decoration-2">
-              p-value
-            </a>
-            = {{ $n(pValue) }}<br>
+              class="ml-2 font-semibold underline underline-offset-4 decoration-2">(?)
+            </a><br>
             {{ $t('pValueDetails') }}
           </p>
         </div>
