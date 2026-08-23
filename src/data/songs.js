@@ -237,6 +237,33 @@ export default [
     },
   },
   {
+    id: 'haru',
+    name: 'Wait for Spring - tayori',
+    source: 'https://music.apple.com/id/album/wait-for-spring/1823962793?i=1823962804',
+    files: {
+      wav_24: {
+        url: 'https://files.catbox.moe/c3491y.wav',
+        size: 23.8,
+      },
+      wav_16: {
+        url: 'https://files.catbox.moe/g5qml3.wav',
+        size: 14.6,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/ieisca.mp3',
+        size: 3.3,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/p39hjm.mp3',
+        size: 2.6,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/ym22ur.mp3',
+        size: 1.3,
+      },
+    },
+  },
+  {
     id: 'hito',
     name: 'One Wish - yuiko',
     source: 'https://music.apple.com/id/album/hitotsu-no-negai/1683465948?i=1683466015',
@@ -257,6 +284,57 @@ export default [
       mp3_128: {
         url: 'https://files.catbox.moe/0p0zsz.mp3',
         size: 1.6,
+      },
+    },
+  },
+  {
+    id: 'taid',
+    name: 'TAIDADA - ZUTOMAYO',
+    source: 'https://music.apple.com/id/album/taidada/1770242092?i=1770242096',
+    files: {
+      wav_24: {
+        url: 'https://files.catbox.moe/jf6m6s.wav',
+        size: 25.9,
+      },
+      wav_16: {
+        url: 'https://files.catbox.moe/plpttq.wav',
+        size: 15.9,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/nejrzn.mp3',
+        size: 3.6,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/smulv7.mp3',
+        size: 2.9,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/udg8c1.mp3',
+        size: 1.4,
+      },
+    },
+  },
+  {
+    id: 'sora',
+    name: 'Sky and Amusement Park - Aizora to Tsuki',
+    source: 'https://music.apple.com/id/album/sora-to-yuuenchi/1606920713?i=1606920717',
+    files: {
+      wav_24: null,
+      wav_16: {
+        url: 'https://files.catbox.moe/i3ryzn.wav',
+        size: 15.7,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/mv9q7d.mp3',
+        size: 3.6,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/mg0cfi.mp3',
+        size: 2.9,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/ikor1f.mp3',
+        size: 1.4,
       },
     },
   },
