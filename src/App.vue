@@ -429,25 +429,13 @@ const createStats = async () => {
         const category = getCategory(result.audioA, result.audioB)
         const points = result.points.split('1').length - 1
 
-        const isPassed = () => {
-          if (trials == 10 && points >= 9) return true
-          if (trials == 20 && points >= 15) return true
-          return false
-        }
-
         // Initialize stats[category] if undefined
         if (!stats[category]) stats[category] = {
-          t10: {
-            passed: 0,
-            notPassed: 0,
-          },
-          t20: {
-            passed: 0,
-            notPassed: 0,
-          },
+          t10: Object.fromEntries(Array.from({ length: 11 }, (_, i) => [i, 0])),
+          t20: Object.fromEntries(Array.from({ length: 21 }, (_, i) => [i, 0])),
         }
 
-        stats[category][`t${trials}`][isPassed() ? 'passed' : 'notPassed']++
+        stats[category][`t${trials}`][points]++
       })
     } else {
       console.log('No results data')
