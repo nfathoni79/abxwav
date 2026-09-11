@@ -5,6 +5,7 @@ import { useDatabase } from 'vuefire'
 import { ref as dbRef, get, set, push, serverTimestamp } from 'firebase/database'
 import Dexie from 'dexie'
 import DeviceDetector from 'device-detector-js'
+import VueApexCharts from 'vue3-apexcharts'
 
 import AButton from './components/AButton.vue'
 import ARadio from './components/ARadio.vue'
@@ -15,7 +16,7 @@ import { calculatePValue } from './utils'
 import songs from './data/songs'
 import qualities from './data/qualities'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 
 // Dexie
 const dxDb = new Dexie('AudioFileDb')
@@ -29,12 +30,16 @@ const resultsRef = dbRef(db, 'abxwav/results2')
 const statsRef = dbRef(db, 'abxwav/stats2')
 
 // Bind to inputs
+const tab = ref('home')
 const songId = ref(songs[0].id)
 const qualityAId = ref('wav_16')
 const qualityBid = ref('mp3_320')
 const maxTrial = ref(10)
 const audio = ref(null)
 const choice = ref(null)
+
+// Stats
+const stats = ref(null)
 
 // Timestamps of the start and end of test
 const startAt = ref(null)
@@ -55,6 +60,7 @@ const audioBReady = ref(false)
 const audioAPlaying = ref(false)
 const audioBPlaying = ref(false)
 
+const statsLoading = ref(false)
 const audioLoading = ref(false)
 const startInfo = ref('')
 const loadingProgress = ref(0)
@@ -62,6 +68,81 @@ const loadingProgress = ref(0)
 const detailShowing = ref(false)
 
 const uuid = ref(null)
+
+/**
+ * Current stat based on quality and trial selection.
+ */
+const stat = computed(() => {
+  if (!stats.value) return null
+  return stats.value?.[getCategory(qualityAId.value, qualityBid.value)]?.[`t${maxTrial.value}`]
+})
+
+/**
+ * Series for ApexChart.
+ */
+const series = computed(() => {
+  return [
+    {
+      name: 'Result',
+      data: stat.value ? Object.values(stat.value) : [],
+    },
+  ]
+})
+
+/**
+ * Chart options for ApexChart.
+ */
+const chartOptions = computed(() => {
+  return {
+    chart: {
+      type: 'bar',
+      height: Math.min(Object.keys(stat.value ?? {}).length * 30, 400),
+      toolbar: {
+        tools: {
+          download: false
+        },
+      },
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 2,
+        borderRadiusApplication: 'end',
+        horizontal: true,
+        dataLabels: {
+          position: 'top',
+        },
+      },
+    },
+    dataLabels: {
+      enabled: true,
+      textAnchor: 'start',
+      offsetX: 5,
+      style: {
+        colors: ['#101828'],
+      },
+    },
+    tooltip: {
+      enabled: false,
+    },
+    colors: ['#101828'],
+    xaxis: {
+      title: {
+        text: t('result', 2),
+      },
+      categories: stat.value ? Object.keys(stat.value) : [],
+      labels: {
+        formatter: (val) => Math.round(val),
+      },
+      min: 0,
+      max: (Math.floor(Math.max(...Object.values(stat.value ?? {})) / 50) + 1) * 50,
+    },
+    yaxis: {
+      title: {
+        text: t('correctChoice', 2),
+      },
+    },
+  }
+})
 
 const song = computed(() => {
   return songs.find(s => s.id == songId.value)
@@ -107,6 +188,14 @@ const audioPlaying = computed(() => {
   return audioAPlaying.value || audioBPlaying.value
 })
 
+// When switching tab, reset song, qualities, trial selected
+watch(tab, newTab => {
+  songId.value = songs[0].id
+  qualityAId.value = 'wav_16'
+  qualityBid.value = 'mp3_320'
+  maxTrial.value = 10
+})
+
 // When switching song, reset qualities selected
 watch(song, newSong => {
   qualityAId.value = 'wav_16'
@@ -136,7 +225,51 @@ watch(trialNo, (newNo) => {
 
 onMounted(() => {
   loadUuid()
+  getStats()
 })
+
+/**
+ * Get stats from Firebase.
+ */
+const getStats = async () => {
+  stats.value = localStorage.getItem('stats')
+  let statsNext = localStorage.getItem('statsNext')
+
+  if (!statsNext) {
+    localStorage.setItem('statsNext', 0)
+    statsNext = 0
+  }
+
+  if (!stats.value || (stats.value && parseInt(statsNext) < Date.now())) {
+    statsLoading.value = true
+    // Fetch stats
+    await get(statsRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        stats.value = snapshot.child('stats').val()
+      } else {
+        console.log('No stats data.')
+      }
+    }).catch((error) => {
+      console.error(error)
+    })
+
+    localStorage.setItem('stats', JSON.stringify(stats.value))
+    localStorage.setItem('statsNext', Date.now() + (24 * 60 * 60 * 1000))
+
+    statsLoading.value = false
+  } else {
+    stats.value = JSON.parse(stats.value)
+  }
+}
+
+/**
+ * Switch between Test and Stats tab.
+ * @param {string} newTab - New tab to switch.
+ */
+const switchTab = (newTab) => {
+  if (audioLoading.value || statsLoading.value) return
+  tab.value = newTab
+}
 
 const start = async () => {
   audioLoading.value = true
@@ -453,6 +586,7 @@ const createStats = async () => {
 
 <template>
   <div class="mx-auto max-w-screen-sm min-h-screen bg-white px-4 sm:px-8 py-8 text-center">
+    <!-- Home Page -->
     <div v-if="trialNo < 1">
       <div class="relative">
         <h1 class="text-3xl font-semibold text-gray-900">ABX WAV</h1>
@@ -484,8 +618,28 @@ const createStats = async () => {
         </p>
       </div>
 
+      <!-- Tabs -->
+      <div class="mt-2 text-center">
+        <ul class="flex items-center justify-around flex-wrap">
+          <li class="grow">
+            <a href="#" @click.prevent="switchTab('home')"
+              :class="`inline-block w-full p-2
+              ${tab == 'home'
+              ? 'border-b-2 border-gray-900 p-2 font-medium'
+              : 'border-b hover:border-b-2 border-gray-400'}`">{{ $t('test') }}</a>
+          </li>
+          <li class="grow">
+            <a href="#" @click.prevent="switchTab('stats')"
+              :class="`inline-block w-full p-2
+              ${tab == 'stats'
+              ? 'border-b-2 border-gray-900 p-2 font-medium'
+              : 'border-b hover:border-b-2 border-gray-400'}`">{{ $t('globalStats') }}</a>
+          </li>
+        </ul>
+      </div>
+
       <form @submit.prevent="start" class="mt-4">
-        <label for="song"
+        <label v-if="tab == 'home'" for="song"
           class="mt-2 flex justify-center items-center gap-2 sm:gap-0">
           
           <span class="basis-1/4 sm:basis-1/5 text-gray-900 text-left">{{ $t('song') }}</span>
@@ -500,7 +654,7 @@ const createStats = async () => {
           </select>
         </label>
 
-        <a :href="song.source" target="_blank"
+        <a v-if="tab == 'home'" :href="song.source" target="_blank"
           class="font-semibold text-sm hover:underline decoration-2">
           
           {{ $t('source') }}
@@ -544,11 +698,11 @@ const createStats = async () => {
           <span class="basis-1/4 sm:basis-1/5 text-gray-900 text-left">{{ $t('trial', 2) }}</span>
 
           <div class="w-full flex justify-center items-center gap-2">
-            <ARadio id="trials-5" name="maxTrial" :value="5"
+            <ARadio v-if="tab == 'home'" id="trials-5" name="maxTrial" :value="5"
               v-model="maxTrial" class="w-full flex-1">
               <div class="flex flex-col">
                 5
-                <span class="text-xs">({{ $t('lessAccurate') }})</span>
+                <span v-if="tab == 'home'" class="text-xs">({{ $t('lessAccurate') }})</span>
               </div>
             </ARadio>
 
@@ -556,7 +710,7 @@ const createStats = async () => {
               v-model="maxTrial" class="w-full flex-1">
               <div class="flex flex-col">
                 10
-                <span class="text-xs">({{ $t('recommended') }})</span>
+                <span v-if="tab == 'home'" class="text-xs">({{ $t('recommended') }})</span>
               </div>
             </ARadio>
 
@@ -564,13 +718,13 @@ const createStats = async () => {
               v-model="maxTrial" class="w-full flex-1">
               <div class="flex flex-col">
                 20
-                <span class="text-xs">({{ $t('moreAccurate') }})</span>
+                <span v-if="tab == 'home'" class="text-xs">({{ $t('moreAccurate') }})</span>
               </div>
             </ARadio>
           </div>
         </div>
 
-        <div class="mt-2">
+        <div v-if="tab == 'home'" class="mt-2">
           <p class="text-sm text-gray-900">{{ $t('willDownload', { size: totalSize.toFixed(1) }) }}</p>
 
           <p v-if="startInfo" class="mt-2 text-gray-900">{{ startInfo }}</p>
@@ -581,12 +735,12 @@ const createStats = async () => {
           </div>
         </div>
 
-        <AButton :disabled="audioLoading" type="submit" class="mt-4">
+        <AButton v-if="tab == 'home'" :disabled="audioLoading" type="submit" class="mt-4">
           {{ $t('start') }}
         </AButton>
       </form>
 
-      <div class="mt-4">
+      <div v-if="tab == 'home'" class="mt-4">
         <i18n-t keypath="request" tag="p">
           <a href="https://forms.gle/qFd4JcAoc5kkkJ6a9" target="_blank"
             class="font-semibold hover:underline decoration-2">
@@ -595,8 +749,16 @@ const createStats = async () => {
           </a>
         </i18n-t>
       </div>
+
+      <!-- Chart -->
+      <div v-if="tab == 'stats'" class="mt-4">
+        <VueApexCharts type="bar" height="330"
+          :options="chartOptions" :series="series"
+        ></VueApexCharts>
+      </div>
     </div>
 
+    <!-- Test Page -->
     <div v-if="trialNo >= 1 && trialNo <= maxTrial">
       <h1 class="text-3xl font-semibold text-gray-900">
         {{ $t('trialOf', [trialNo, maxTrial]) }}
@@ -669,6 +831,7 @@ const createStats = async () => {
       </AButton>
     </div>
 
+    <!-- Result Page -->
     <div v-if="trialNo > maxTrial">
       <h1 class="text-3xl font-semibold text-gray-900">
         {{ $t('result') }}
@@ -710,7 +873,7 @@ const createStats = async () => {
                 <tr>
                   <th class="px-4">{{ $t('trial') }}</th>
                   <th class="px-4">{{ $t('yourChoice') }}</th>
-                  <th class="px-4">{{ $t('answer') }}</th>
+                  <th class="px-4">{{ $t('correctChoice') }}</th>
                 </tr>
               </thead>
               
