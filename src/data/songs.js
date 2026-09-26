@@ -387,6 +387,108 @@ export default [
     },
   },
   {
+    id: 'rosa',
+    name: 'Rosanna - Toto',
+    source: 'https://music.apple.com/id/album/rosanna/185716551?i=185716601',
+    files: {
+      wav_24: {
+        url: 'https://files.catbox.moe/xii0hs.wav',
+        size: 25,
+      },
+      wav_16: {
+        url: 'https://files.catbox.moe/3wdbha.wav',
+        size: 16.6,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/ybs9mb.mp3',
+        size: 3.8,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/aty9ya.mp3',
+        size: 3,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/uqksun.mp3',
+        size: 1.5,
+      },
+    },
+  },
+  {
+    id: 'koe',
+    name: 'KOE - ASCA',
+    source: 'https://music.apple.com/id/album/koe/1538285805?i=1538285807',
+    files: {
+      wav_24: null,
+      wav_16: {
+        url: 'https://files.catbox.moe/a2r957.wav',
+        size: 15.1,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/an228t.mp3',
+        size: 3.4,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/snjb38.mp3',
+        size: 2.7,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/n99m4f.mp3',
+        size: 1.4,
+      },
+    },
+  },
+  {
+    id: 'odo',
+    name: 'Odo - Ado',
+    source: 'https://music.apple.com/id/album/odo/1603820296?i=1603820299',
+    files: {
+      wav_24: null,
+      wav_16: {
+        url: 'https://files.catbox.moe/177431.wav',
+        size: 16.7,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/6n6h3g.mp3',
+        size: 3.8,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/dgnbw4.mp3',
+        size: 3,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/v9ctow.mp3',
+        size: 1.5,
+      },
+    },
+  },
+  {
+    id: 'peri',
+    name: 'Perisai Jitu - Moona Hoshinova',
+    source: 'https://music.apple.com/id/album/perisai-jitu/1656189289?i=1656189290',
+    files: {
+      wav_24: {
+        url: 'https://files.catbox.moe/po7j0h.wav',
+        size: 17.1,
+      },
+      wav_16: {
+        url: 'https://files.catbox.moe/ba4yqj.wav',
+        size: 10.5,
+      },
+      mp3_320: {
+        url: 'https://files.catbox.moe/l7u7bb.mp3',
+        size: 2.4,
+      },
+      mp3_256: {
+        url: 'https://files.catbox.moe/9cmx1f.mp3',
+        size: 1.9,
+      },
+      mp3_128: {
+        url: 'https://files.catbox.moe/tktjla.mp3',
+        size: 1,
+      },
+    },
+  },
+  {
     id: 'unev',
     name: 'Une Vie À T\'aimer - Lorien Testard',
     source: 'https://music.apple.com/id/album/une-vie-%C3%A0-taimer/1808472460?i=1808472923',
